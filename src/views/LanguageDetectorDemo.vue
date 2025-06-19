@@ -18,184 +18,193 @@
             </template>
 
             <div class="space-y-4">
-                <div class="space-y-4" v-if="toggleCodeCollapse">
-                    <h2 class="text-xl font-semibold">Example Usage</h2>
-                    <CodeExample :code="exampleCode" />
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Language Detector API</h2>
+                    <p class="text-gray-600 mb-4">
+                        Detect the language of input text directly in the browser using Chrome's built-in AI. Enter your
+                        text and
+                        get a ranked list of detected languages with confidence scores.
+                    </p>
                 </div>
-
-                <p class="text-gray-600 mb-4">
-                    Detect the language of input text using Gemini Nano in Chrome. Enter your text and get instant
-                    language
-                    detection
-                    results.
-                </p>
-
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
                     variant="subtle" :description="downloadStatus" />
 
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-medium">Input Text</h3>
-                    </div>
-                    <UTextarea v-model="inputText" placeholder="Enter text to detect language..." :rows="4"
-                        :disabled="!isSupported" class="w-full" />
-                </div>
-
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-medium">Parameters</h3>
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Temperature: {{ temperature }}</label>
-                            <USlider v-model="temperature" :min="minTemperature" :max="maxTemperature" :step="0.01"
-                                :disabled="!isSupported" />
+                <div class="space-y-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-medium">Input Text</h3>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">TopK: {{ topK }}</label>
-                            <USlider v-model="topK" :min="minTopK" :max="maxTopK" :step="1" :disabled="!isSupported" />
-                        </div>
+                        <UTextarea v-model="inputText" placeholder="Enter text to detect language..." :rows="4"
+                            :disabled="!isSupported" class="w-full" />
                     </div>
-                </div>
 
-                <div class="space-y-4">
-                    <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
-                </div>
+                    <div class="flex gap-2">
+                        <UButton @click="detectLanguage" :loading="isProcessing" :disabled="!isSupported || !canProcess"
+                            color="primary" size="md">
+                            Detect Language
+                        </UButton>
+                        <UButton v-if="isProcessing" @click="cancelDetection" color="error" variant="soft" size="md">
+                            Cancel
+                        </UButton>
+                    </div>
 
-                <div class="flex gap-2">
-                    <UButton @click="detectLanguage" :loading="isProcessing" :disabled="!isSupported || !canProcess"
-                        color="primary" size="md">
-                        Detect Language
-                    </UButton>
-                    <UButton v-if="isProcessing" @click="cancelDetection" color="error" variant="soft" size="md">
-                        Cancel
-                    </UButton>
-                </div>
+                    <div v-if="error" class="mt-4">
+                        <UAlert color="error" variant="subtle" :title="error" />
+                    </div>
 
-                <div v-if="error" class="mt-4">
-                    <UAlert color="error" variant="subtle" :title="error" />
-                </div>
-
-                <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="text-gray-500 mb-2">Detected Language</h3>
-                    <div class="whitespace-pre-wrap">
-                        <div class="font-medium">{{ getLanguageName(result.language) }}</div>
-                        <div class="text-sm text-gray-600">Confidence: {{ (result.confidence * 100).toFixed(2) }}%</div>
+                    <div v-if="results.length" class="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h3 class="text-gray-500 mb-2">Detected Languages</h3>
+                        <ul>
+                            <li v-for="(res, idx) in results" :key="idx">
+                                <span class="font-mono">{{ res.detectedLanguage }}</span>
+                                <span class="ml-2 text-xs text-gray-500">Confidence: {{ (res.confidence *
+                                    100).toFixed(2)
+                                    }}%</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </UCard>
+        <div class="space-y-4" v-if="toggleCodeCollapse">
+            <h2 class="text-xl font-semibold">Example Usage</h2>
+            <CodeExample :code="exampleCode" />
+        </div>
     </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
-import StreamingToggle from '../components/StreamingToggle.vue'
-import { useAIModel } from '../composables/useAIModel'
-import { useExampleCode } from '../composables/useExampleCode'
-import { useFormOptions } from '../composables/useFormOptions'
-import { useStreaming } from '../composables/useStreaming'
 
 const inputText = ref('')
-const result = ref(null)
+const results = ref([])
+const isProcessing = ref(false)
+const isSupported = ref(false)
+const error = ref('')
+const downloadStatus = ref('')
+const downloadProgress = ref(0)
+const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
 
-const {
-    isSupported,
-    error,
-    downloadStatus,
-    downloadProgress,
-    isProcessing,
-    abortController,
-    checkSupport,
-    createModel,
-    cleanup
-} = useAIModel('LanguageDetector')
-
-const {
-    temperature,
-    minTemperature,
-    maxTemperature,
-    topK,
-    minTopK,
-    maxTopK,
-    languageOptions
-} = useFormOptions()
-
-const { enableStreaming, processStreamingResponse } = useStreaming()
-
-const canProcess = computed(() => {
-    return inputText.value.trim() !== ''
-})
-
-function getLanguageName(code) {
-    const language = languageOptions.find(lang => lang.value === code)
-    return language ? language.label : code
-}
-
-const { exampleCode } = useExampleCode('LanguageDetector', {
-    inputRef: inputText,
-    streamingRef: enableStreaming,
-    methodName: 'detect',
-    streamMethodName: 'detectStreaming',
-    generateOptionsStr: () => {
-        const options = []
-
-        if (temperature.value !== 1.0) {
-            options.push(`temperature: ${temperature.value}`)
-        }
-        if (topK.value !== 3) {
-            options.push(`topK: ${topK.value}`)
-        }
-
-        return options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
-    }
-})
+const canProcess = computed(() => inputText.value.trim().length > 3)
 
 let detector = null
+
+const generateExampleCode = computed(() => {
+    return `const available = await LanguageDetector.availability()
+let detector
+
+if (available === 'unavailable') {
+    return
+}
+
+if (available === 'available') {
+    detector = await LanguageDetector.create()
+} else {
+    detector = await LanguageDetector.create({
+        monitor(m) {
+            m.addEventListener('downloadprogress', (e) => {
+                console.log(\`Downloaded \${e.loaded * 100}%\`)
+            })
+        }
+    })
+}
+
+const result = await detector.detect(
+    ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to detect language from goes here...'"}\
+)`
+})
+
+const exampleCode = computed(() => generateExampleCode.value)
 
 onMounted(async () => {
     await checkSupport()
 })
 
-async function detectLanguage() {
-    if (!canProcess.value || !isSupported.value) return
+onUnmounted(() => {
+    if (abortController.value) {
+        abortController.value.abort()
+    }
+})
 
+async function checkSupport() {
     try {
-        isProcessing.value = true
-        error.value = ''
-        abortController.value = new AbortController()
-
-        if (!detector) {
-            detector = await createModel()
-            if (!detector) return
-        }
-
-        const options = {
-            signal: abortController.value.signal,
-            temperature: temperature.value,
-            topK: topK.value
-        }
-
-        if (enableStreaming.value) {
-            const stream = await detector.detectStreaming(inputText.value, options)
-            await processStreamingResponse(stream, result)
+        if ('LanguageDetector' in window) {
+            const availability = await LanguageDetector.availability()
+            if (availability === 'unavailable') {
+                isSupported.value = false
+                error.value = 'Language Detector API is not supported in this browser.'
+                downloadStatus.value = ''
+            } else {
+                isSupported.value = true
+                if (availability === 'downloadable' || availability === 'downloading') {
+                    downloadStatus.value = 'Model needs to be downloaded. This may take a few moments.'
+                } else {
+                    downloadStatus.value = ''
+                }
+            }
         } else {
-            result.value = await detector.detect(inputText.value, options)
+            isSupported.value = false
+            error.value = 'Language Detector API is not supported in this browser.'
+            downloadStatus.value = ''
         }
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            error.value = err.message
-        }
-    } finally {
-        isProcessing.value = false
+        error.value = err.message
+        isSupported.value = false
     }
 }
 
 function cancelDetection() {
     if (abortController.value) {
         abortController.value.abort()
+        abortController.value = null
+    }
+}
+
+async function detectLanguage() {
+    if (!isSupported.value || inputText.value.trim().length < 4) return
+
+    isProcessing.value = true
+    error.value = ''
+    results.value = []
+    abortController.value = new AbortController()
+
+    try {
+        const availability = await LanguageDetector.availability()
+        if (availability === 'unavailable') {
+            throw new Error('Language Detector API is not available.')
+        }
+
+        const options = {
+            signal: abortController.value.signal,
+            monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                    downloadProgress.value = e.loaded * 100
+                    downloadStatus.value = 'Downloading model...'
+                })
+            }
+        }
+
+        if (availability !== 'available') {
+            downloadStatus.value = 'Model is being downloaded. Please wait...'
+        }
+
+        detector = await LanguageDetector.create(options)
+        await detector.ready
+        const detected = await detector.detect(inputText.value)
+        results.value = detected
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            error.value = 'Operation cancelled'
+        } else {
+            error.value = err.message || 'Failed to detect language'
+            console.error('Detection error:', err)
+        }
+    } finally {
+        isProcessing.value = false
+        downloadStatus.value = ''
+        downloadProgress.value = 0
     }
 }
 </script>

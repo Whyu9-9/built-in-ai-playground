@@ -1,62 +1,77 @@
 <template>
-    <div class="space-y-8">
-        <UAlert v-if="!isSupported" title="API Not Supported" color="error" variant="subtle"
-            description="This feature requires enabling Experimental Web Platform features in your browser."
-            class="mb-4" />
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="i-heroicons-code-bracket-20-solid text-lg" />
-                        <h3 class="text-lg font-semibold">Image Prompt API</h3>
-                    </div>
-                    <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
-                        icon="i-heroicons-code-bracket-20-solid">
-                        {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
-                    </UButton>
+    <UCard>
+        <template #header>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="i-heroicons-code-bracket-20-solid text-lg" />
+                    <h3 class="text-lg font-semibold">Prompt API (Image)</h3>
                 </div>
-            </template>
+                <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
+                    icon="i-heroicons-code-bracket-20-solid">
+                    {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
+                </UButton>
+            </div>
+        </template>
 
-            <div class="space-y-4">
-                <div class="space-y-4" v-if="toggleCodeCollapse">
-                    <h2 class="text-xl font-semibold">Example Usage</h2>
-                    <CodeExample :code="exampleCode" />
-                </div>
+        <div class="space-y-4">
+            <div class="space-y-4" v-if="toggleCodeCollapse">
+                <h2 class="text-xl font-semibold">Example Usage</h2>
+                <CodeExample :code="exampleCode" />
+            </div>
 
-                <p class="text-gray-600 mb-4">
-                    Send a prompt about an image to Gemini Nano in Chrome. Upload an image and ask questions about it to
-                    get
-                    detailed
-                    responses.
-                </p>
+            <p class="text-gray-600 mb-4">
+                Send a text prompt and an image to Gemini Nano in Chrome and get a response directly in the browser.
+                Enter your prompt, upload an image, or capture one from your webcam, and see the result below.
+            </p>
 
-                <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
-                    variant="subtle" :description="downloadStatus" />
+            <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
+                :description="downloadStatus" />
 
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-medium">Image</h3>
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex items-center gap-4">
-                            <UButton @click="triggerFileInput" :disabled="!isSupported" color="primary" variant="soft">
-                                Upload Image
-                            </UButton>
-                            <input type="file" ref="fileInput" class="hidden" accept="image/*"
-                                @change="handleFileUpload" />
-                            <span v-if="selectedFile" class="text-sm text-gray-600">{{ selectedFile.name }}</span>
-                        </div>
-                        <img v-if="imageUrl" :src="imageUrl" alt="Selected image"
-                            class="max-w-md rounded-lg shadow-sm" />
-                    </div>
-                </div>
-
+            <div class="space-y-6">
                 <div class="space-y-4">
                     <div class="flex items-center gap-2">
                         <h3 class="font-medium">Prompt</h3>
                     </div>
-                    <UTextarea v-model="inputText" placeholder="Ask a question about the image..." :rows="4"
-                        :disabled="!isSupported" class="w-full" />
+                    <UTextarea v-model="inputText" placeholder="Enter your prompt..." :rows="3" :disabled="!isSupported"
+                        class="w-full" />
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-medium">Image</h3>
+                    </div>
+                    <div class="flex gap-2 mb-2">
+                        <UButton :color="imageMode === 'upload' ? 'primary' : 'gray'" @click="switchToUpload" size="sm">
+                            Upload
+                        </UButton>
+                        <UButton :color="imageMode === 'webcam' ? 'primary' : 'gray'" @click="switchToWebcam" size="sm">
+                            Webcam
+                        </UButton>
+                    </div>
+                    <div v-if="imageMode === 'upload'">
+                        <UInput type="file" accept="image/*" @change="onImageChange" :disabled="!isSupported" />
+                        <div v-if="imageUrl" class="mt-2">
+                            <img :src="imageUrl" alt="Selected image" class="max-h-40 rounded border" />
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div v-if="!webcamActive">
+                            <UButton @click="startWebcam" :disabled="!isSupported">Start Webcam</UButton>
+                        </div>
+                        <div v-else>
+                            <div v-if="!capturedWebcamImage">
+                                <video ref="videoRef" autoplay playsinline class="rounded border max-h-40 mb-2"></video>
+                                <div class="flex gap-2">
+                                    <UButton @click="captureWebcam" color="primary">Capture</UButton>
+                                </div>
+                            </div>
+                            <div v-else>
+                                <img :src="imageUrl" alt="Captured image" class="max-h-40 rounded border mb-2" />
+                                <div class="flex gap-2">
+                                    <UButton @click="retakeWebcam" color="primary">Retake</UButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="space-y-4">
@@ -74,10 +89,6 @@
                             <USlider v-model="topK" :min="minTopK" :max="maxTopK" :step="1" :disabled="!isSupported" />
                         </div>
                     </div>
-                </div>
-
-                <div class="space-y-4">
-                    <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
                 </div>
 
                 <div class="flex gap-2">
@@ -99,127 +110,282 @@
                     <div class="whitespace-pre-wrap">{{ result }}</div>
                 </div>
             </div>
-        </UCard>
-    </div>
+        </div>
+    </UCard>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
-import StreamingToggle from '../components/StreamingToggle.vue'
-import { useAIModel } from '../composables/useAIModel'
-import { useExampleCode } from '../composables/useExampleCode'
-import { useFormOptions } from '../composables/useFormOptions'
-import { useStreaming } from '../composables/useStreaming'
 
 const inputText = ref('')
-const result = ref('')
-const toggleCodeCollapse = ref(false)
-const fileInput = ref(null)
-const selectedFile = ref(null)
+const imageFile = ref(null)
 const imageUrl = ref('')
+const result = ref('')
+const isProcessing = ref(false)
+const isSupported = ref(false)
+const error = ref('')
+const downloadStatus = ref('')
+const downloadProgress = ref(0)
+const abortController = ref(null)
+let session = null
 
-const {
-    isSupported,
-    error,
-    downloadStatus,
-    downloadProgress,
-    isProcessing,
-    abortController,
-    checkSupport,
-    createModel,
-    cleanup
-} = useAIModel('ImagePrompt')
+const imageMode = ref('upload')
+const webcamActive = ref(false)
+const videoRef = ref(null)
+let stream = null
+const capturedWebcamImage = ref(false)
 
-const {
-    temperature,
-    minTemperature,
-    maxTemperature,
-    topK,
-    minTopK,
-    maxTopK
-} = useFormOptions()
+const temperature = ref(1.0)
+const minTemperature = ref(0.0)
+const maxTemperature = ref(2.0)
+const topK = ref(3)
+const minTopK = ref(1)
+const maxTopK = ref(8)
 
-const { enableStreaming, processStreamingResponse } = useStreaming()
+const canProcess = computed(() => inputText.value.trim().length > 0 && imageFile.value)
 
-const canProcess = computed(() => {
-    return inputText.value.trim() !== '' && selectedFile.value !== null
+const toggleCodeCollapse = ref(false)
+
+const generateExampleCode = computed(() => {
+    return `const available = await LanguageModel.availability()
+let model
+
+if (available === 'unavailable') {
+  return
+}
+
+if (available === 'available') {
+  model = await LanguageModel.create()
+} else {
+  model = await LanguageModel.create({
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => {
+        console.log(\`Downloaded \${e.loaded * 100}%\`)
+      })
+    }
+  })
+}
+
+// Get image data from a file input or canvas
+const imageFile = document.querySelector('input[type="file"]').files[0]
+const imageData = await imageFile.arrayBuffer()
+
+// Create a prompt with both text and image
+const prompt = {
+  text: ${promptText.value ? `'${promptText.value.replace(/'/g, "\\'")}'` : "'What can you tell me about this image?'"},
+  images: [imageData]
+}
+
+const result = await model.generateContent(prompt)`
 })
 
-const { exampleCode } = useExampleCode('ImagePrompt', {
-    inputRef: inputText,
-    streamingRef: enableStreaming,
-    methodName: 'prompt',
-    streamMethodName: 'promptStreaming',
-    generateOptionsStr: () => {
-        const options = []
+const exampleCode = computed(() => generateExampleCode.value)
 
-        if (temperature.value !== 1.0) {
-            options.push(`temperature: ${temperature.value}`)
-        }
-        if (topK.value !== 3) {
-            options.push(`topK: ${topK.value}`)
-        }
-
-        return options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+watch(imageMode, (newMode, oldMode) => {
+    if (newMode === 'webcam' && !webcamActive.value) {
+        startWebcam()
+    } else if (newMode === 'upload' && webcamActive.value) {
+        stopWebcam()
     }
 })
 
-let model = null
-
 onMounted(async () => {
+    await fetchParams()
     await checkSupport()
 })
 
-function triggerFileInput() {
-    fileInput.value.click()
-}
+onUnmounted(() => {
+    if (abortController.value) {
+        abortController.value.abort()
+    }
+    if (session) {
+        session.destroy()
+    }
+    stopWebcam()
+})
 
-async function handleFileUpload(event) {
-    const file = event.target.files[0]
-    if (file) {
-        selectedFile.value = file
-        imageUrl.value = URL.createObjectURL(file)
+async function fetchParams() {
+    if ('LanguageModel' in window && LanguageModel.params) {
+        try {
+            const params = await LanguageModel.params()
+            temperature.value = params.defaultTemperature
+            minTemperature.value = 0.0
+            maxTemperature.value = params.maxTemperature
+            topK.value = params.defaultTopK
+            minTopK.value = 1
+            maxTopK.value = params.maxTopK
+        } catch (e) {
+            // fallback to defaults
+        }
     }
 }
 
-async function sendPrompt() {
-    if (!canProcess.value || !isSupported.value) return
-
+async function checkSupport() {
     try {
-        isProcessing.value = true
-        error.value = ''
-        abortController.value = new AbortController()
-
-        if (!model) {
-            model = await createModel()
-            if (!model) return
-        }
-
-        const options = {
-            signal: abortController.value.signal,
-            temperature: temperature.value,
-            topK: topK.value
-        }
-
-        if (enableStreaming.value) {
-            const stream = await model.promptStreaming(selectedFile.value, inputText.value, options)
-            await processStreamingResponse(stream, result)
+        if ('LanguageModel' in window) {
+            const availability = await LanguageModel.availability()
+            if (availability === 'unavailable') {
+                isSupported.value = false
+                error.value = 'Prompt API is not supported in this browser.'
+                downloadStatus.value = ''
+            } else {
+                isSupported.value = true
+                if (availability === 'downloadable' || availability === 'downloading') {
+                    downloadStatus.value = 'Model needs to be downloaded. This may take a few moments.'
+                } else {
+                    downloadStatus.value = ''
+                }
+            }
         } else {
-            result.value = await model.prompt(selectedFile.value, inputText.value, options)
+            isSupported.value = false
+            error.value = 'Prompt API is not supported in this browser.'
+            downloadStatus.value = ''
         }
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            error.value = err.message
-        }
-    } finally {
-        isProcessing.value = false
+        error.value = err.message
+        isSupported.value = false
     }
+}
+
+function onImageChange(e) {
+    const file = e.target.files[0]
+    if (file) {
+        imageFile.value = file
+        imageUrl.value = URL.createObjectURL(file)
+    } else {
+        imageFile.value = null
+        imageUrl.value = ''
+    }
+}
+
+function startWebcam() {
+    if (!navigator.mediaDevices?.getUserMedia) return
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(async s => {
+            stream = s
+            webcamActive.value = true
+            await nextTick()
+            if (videoRef.value) {
+                videoRef.value.srcObject = stream
+                videoRef.value.play()
+            }
+        })
+        .catch(() => {
+            error.value = 'Unable to access webcam.'
+        })
+}
+
+function stopWebcam() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop())
+        stream = null
+    }
+    webcamActive.value = false
+    if (videoRef.value) {
+        videoRef.value.srcObject = null
+    }
+}
+
+function captureWebcam() {
+    if (!videoRef.value) return
+    const video = videoRef.value
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    canvas.toBlob(blob => {
+        if (blob) {
+            imageFile.value = blob
+            imageUrl.value = URL.createObjectURL(blob)
+            capturedWebcamImage.value = true
+        }
+    }, 'image/jpeg')
+}
+
+function retakeWebcam() {
+    capturedWebcamImage.value = false
+    imageFile.value = null
+    imageUrl.value = ''
+    stopWebcam()
+    startWebcam()
 }
 
 function cancelPrompt() {
     if (abortController.value) {
         abortController.value.abort()
+        abortController.value = null
+    }
+}
+
+function switchToUpload() {
+    imageMode.value = 'upload'
+    capturedWebcamImage.value = false
+}
+
+function switchToWebcam() {
+    imageMode.value = 'webcam'
+    // If switching to webcam, clear any previous captured image
+    capturedWebcamImage.value = false
+    imageFile.value = null
+    imageUrl.value = ''
+}
+
+async function sendPrompt() {
+    if (!isSupported.value || !inputText.value.trim() || !imageFile.value) return
+
+    isProcessing.value = true
+    error.value = ''
+    result.value = ''
+    abortController.value = new AbortController()
+
+    try {
+        const availability = await LanguageModel.availability()
+        if (availability === 'unavailable') {
+            throw new Error('Prompt API is not available.')
+        }
+
+        const options = {
+            expectedInputs: [{ type: 'image' }],
+            signal: abortController.value.signal,
+            monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                    downloadProgress.value = e.loaded * 100
+                    downloadStatus.value = 'Downloading model...'
+                })
+            }
+        }
+
+        if (availability !== 'available') {
+            downloadStatus.value = 'Model is being downloaded. Please wait...'
+        }
+
+        session = await LanguageModel.create(options)
+        const imageBlob = imageFile.value
+        const promptContent = [
+            { type: 'text', value: inputText.value },
+            { type: 'image', value: imageBlob }
+        ]
+        const response = await session.prompt([
+            { role: 'user', content: promptContent }
+        ], {
+            signal: abortController.value.signal,
+            temperature: temperature.value,
+            topK: topK.value
+        })
+        result.value = response
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            error.value = 'Operation cancelled'
+        } else {
+            error.value = err.message || 'Failed to get response'
+            console.error('Prompt error:', err)
+        }
+    } finally {
+        isProcessing.value = false
+        downloadStatus.value = ''
+        downloadProgress.value = 0
     }
 }
 </script>

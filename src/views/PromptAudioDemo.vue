@@ -1,61 +1,76 @@
 <template>
-    <div class="space-y-8">
-        <UAlert v-if="!isSupported" title="API Not Supported" color="error" variant="subtle"
-            description="This feature requires enabling Experimental Web Platform features in your browser."
-            class="mb-4" />
-        <UCard>
-            <template #header>
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="i-heroicons-code-bracket-20-solid text-lg" />
-                        <h3 class="text-lg font-semibold">Audio Prompt API</h3>
-                    </div>
-                    <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
-                        icon="i-heroicons-code-bracket-20-solid">
-                        {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
-                    </UButton>
+    <UCard>
+        <template #header>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="i-heroicons-code-bracket-20-solid text-lg" />
+                    <h3 class="text-lg font-semibold">Prompt API (Audio)</h3>
                 </div>
-            </template>
+                <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
+                    icon="i-heroicons-code-bracket-20-solid">
+                    {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
+                </UButton>
+            </div>
+        </template>
 
-            <div class="space-y-4">
-                <div class="space-y-4" v-if="toggleCodeCollapse">
-                    <h2 class="text-xl font-semibold">Example Usage</h2>
-                    <CodeExample :code="exampleCode" />
-                </div>
+        <div class="space-y-4">
+            <div class="space-y-4" v-if="toggleCodeCollapse">
+                <h2 class="text-xl font-semibold">Example Usage</h2>
+                <CodeExample :code="exampleCode" />
+            </div>
 
-                <p class="text-gray-600 mb-4">
-                    Send a prompt about an audio file to Gemini Nano in Chrome. Upload an audio file and ask questions
-                    about it to
-                    get
-                    detailed responses.
-                </p>
+            <p class="text-gray-600 mb-4">
+                Send a text prompt and an audio file to Gemini Nano in Chrome and get a response directly in the
+                browser. Enter your prompt, upload an audio file, or record from your microphone, and see the result
+                below.
+            </p>
 
-                <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
-                    variant="subtle" :description="downloadStatus" />
+            <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
+                :description="downloadStatus" />
 
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-medium">Audio</h3>
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex items-center gap-4">
-                            <UButton @click="triggerFileInput" :disabled="!isSupported" color="primary" variant="soft">
-                                Upload Audio
-                            </UButton>
-                            <input type="file" ref="fileInput" class="hidden" accept="audio/*"
-                                @change="handleFileUpload" />
-                            <span v-if="selectedFile" class="text-sm text-gray-600">{{ selectedFile.name }}</span>
-                        </div>
-                        <audio v-if="audioUrl" controls :src="audioUrl" class="w-full max-w-md"></audio>
-                    </div>
-                </div>
-
+            <div class="space-y-6">
                 <div class="space-y-4">
                     <div class="flex items-center gap-2">
                         <h3 class="font-medium">Prompt</h3>
                     </div>
-                    <UTextarea v-model="inputText" placeholder="Ask a question about the audio..." :rows="4"
-                        :disabled="!isSupported" class="w-full" />
+                    <UTextarea v-model="inputText" placeholder="Enter your prompt..." :rows="3" :disabled="!isSupported"
+                        class="w-full" />
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2">
+                        <h3 class="font-medium">Audio</h3>
+                    </div>
+                    <div class="flex gap-2 mb-2">
+                        <UButton :color="audioMode === 'upload' ? 'primary' : 'gray'" @click="switchToUpload" size="sm">
+                            Upload
+                        </UButton>
+                        <UButton :color="audioMode === 'mic' ? 'primary' : 'gray'" @click="switchToMic" size="sm">
+                            Microphone
+                        </UButton>
+                    </div>
+                    <div v-if="audioMode === 'upload'">
+                        <UInput type="file" accept="audio/*" @change="onAudioChange" :disabled="!isSupported" />
+                        <div v-if="audioUrl" class="mt-2">
+                            <audio :src="audioUrl" controls class="w-full" />
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div v-if="!recording && !recordedAudio">
+                            <UButton @click="startRecording" :disabled="!isSupported">Start Recording</UButton>
+                        </div>
+                        <div v-else-if="recording">
+                            <div class="flex gap-2 items-center mb-2">
+                                <span class="text-red-500 font-bold">● Recording...</span>
+                                <UButton @click="stopRecording" color="primary">Stop</UButton>
+                            </div>
+                        </div>
+                        <div v-else-if="recordedAudio">
+                            <audio :src="audioUrl" controls class="w-full mb-2" />
+                            <div class="flex gap-2">
+                                <UButton @click="retakeAudio" color="primary">Retake</UButton>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="space-y-4">
@@ -73,10 +88,6 @@
                             <USlider v-model="topK" :min="minTopK" :max="maxTopK" :step="1" :disabled="!isSupported" />
                         </div>
                     </div>
-                </div>
-
-                <div class="space-y-4">
-                    <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
                 </div>
 
                 <div class="flex gap-2">
@@ -98,127 +109,269 @@
                     <div class="whitespace-pre-wrap">{{ result }}</div>
                 </div>
             </div>
-        </UCard>
-    </div>
+        </div>
+    </UCard>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
-import StreamingToggle from '../components/StreamingToggle.vue'
-import { useAIModel } from '../composables/useAIModel'
-import { useExampleCode } from '../composables/useExampleCode'
-import { useFormOptions } from '../composables/useFormOptions'
-import { useStreaming } from '../composables/useStreaming'
 
 const inputText = ref('')
-const result = ref('')
-const toggleCodeCollapse = ref(false)
-const fileInput = ref(null)
-const selectedFile = ref(null)
+const audioFile = ref(null)
 const audioUrl = ref('')
+const result = ref('')
+const isProcessing = ref(false)
+const isSupported = ref(false)
+const error = ref('')
+const downloadStatus = ref('')
+const downloadProgress = ref(0)
+const abortController = ref(null)
+let session = null
 
-const {
-    isSupported,
-    error,
-    downloadStatus,
-    downloadProgress,
-    isProcessing,
-    abortController,
-    checkSupport,
-    createModel,
-    cleanup
-} = useAIModel('AudioPrompt')
+const audioMode = ref('upload')
+const recording = ref(false)
+const recordedAudio = ref(false)
+let mediaRecorder = null
+let audioChunks = []
+let audioStream = null
 
-const {
-    temperature,
-    minTemperature,
-    maxTemperature,
-    topK,
-    minTopK,
-    maxTopK
-} = useFormOptions()
+const temperature = ref(1.0)
+const minTemperature = ref(0.0)
+const maxTemperature = ref(2.0)
+const topK = ref(3)
+const minTopK = ref(1)
+const maxTopK = ref(8)
 
-const { enableStreaming, processStreamingResponse } = useStreaming()
+const canProcess = computed(() => inputText.value.trim().length > 0 && audioFile.value)
 
-const canProcess = computed(() => {
-    return inputText.value.trim() !== '' && selectedFile.value !== null
-})
+const toggleCodeCollapse = ref(false)
 
-const { exampleCode } = useExampleCode('AudioPrompt', {
-    inputRef: inputText,
-    streamingRef: enableStreaming,
-    methodName: 'prompt',
-    streamMethodName: 'promptStreaming',
-    generateOptionsStr: () => {
-        const options = []
+const generateExampleCode = computed(() => {
+    return `const available = await LanguageModel.availability()
+let model
 
-        if (temperature.value !== 1.0) {
-            options.push(`temperature: ${temperature.value}`)
-        }
-        if (topK.value !== 3) {
-            options.push(`topK: ${topK.value}`)
-        }
+if (available === 'unavailable') {
+  return
+}
 
-        return options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+if (available === 'available') {
+  model = await LanguageModel.create()
+} else {
+  model = await LanguageModel.create({
+    monitor(m) {
+      m.addEventListener('downloadprogress', (e) => {
+        console.log(\`Downloaded \${e.loaded * 100}%\`)
+      })
     }
+  })
+}
+
+// Get audio data from a file input or MediaRecorder
+const audioFile = document.querySelector('input[type="file"]').files[0]
+const audioData = await audioFile.arrayBuffer()
+
+// Create a prompt with both text and audio
+const prompt = {
+  text: ${promptText.value ? `'${promptText.value.replace(/'/g, "\\'")}'` : "'What is being said in this audio?'"},
+  audio: audioData
+}
+
+const result = await model.generateContent(prompt)`
 })
 
-let model = null
+const exampleCode = computed(() => generateExampleCode.value)
 
 onMounted(async () => {
+    await fetchParams()
     await checkSupport()
 })
 
-function triggerFileInput() {
-    fileInput.value.click()
-}
+onUnmounted(() => {
+    if (abortController.value) {
+        abortController.value.abort()
+    }
+    if (session) {
+        session.destroy()
+    }
+    stopRecording(true)
+})
 
-async function handleFileUpload(event) {
-    const file = event.target.files[0]
-    if (file) {
-        selectedFile.value = file
-        audioUrl.value = URL.createObjectURL(file)
+async function fetchParams() {
+    if ('LanguageModel' in window && LanguageModel.params) {
+        try {
+            const params = await LanguageModel.params()
+            temperature.value = params.defaultTemperature
+            minTemperature.value = 0.0
+            maxTemperature.value = params.maxTemperature
+            topK.value = params.defaultTopK
+            minTopK.value = 1
+            maxTopK.value = params.maxTopK
+        } catch (e) {
+            // fallback to defaults
+        }
     }
 }
 
-async function sendPrompt() {
-    if (!canProcess.value || !isSupported.value) return
-
+async function checkSupport() {
     try {
-        isProcessing.value = true
-        error.value = ''
-        abortController.value = new AbortController()
-
-        if (!model) {
-            model = await createModel()
-            if (!model) return
-        }
-
-        const options = {
-            signal: abortController.value.signal,
-            temperature: temperature.value,
-            topK: topK.value
-        }
-
-        if (enableStreaming.value) {
-            const stream = await model.promptStreaming(selectedFile.value, inputText.value, options)
-            await processStreamingResponse(stream, result)
+        if ('LanguageModel' in window) {
+            const availability = await LanguageModel.availability()
+            if (availability === 'unavailable') {
+                isSupported.value = false
+                error.value = 'Prompt API is not supported in this browser.'
+                downloadStatus.value = ''
+            } else {
+                isSupported.value = true
+                if (availability === 'downloadable' || availability === 'downloading') {
+                    downloadStatus.value = 'Model needs to be downloaded. This may take a few moments.'
+                } else {
+                    downloadStatus.value = ''
+                }
+            }
         } else {
-            result.value = await model.prompt(selectedFile.value, inputText.value, options)
+            isSupported.value = false
+            error.value = 'Prompt API is not supported in this browser.'
+            downloadStatus.value = ''
         }
     } catch (err) {
-        if (err.name !== 'AbortError') {
-            error.value = err.message
-        }
-    } finally {
-        isProcessing.value = false
+        error.value = err.message
+        isSupported.value = false
     }
+}
+
+function switchToUpload() {
+    audioMode.value = 'upload'
+    recordedAudio.value = false
+    audioFile.value = null
+    audioUrl.value = ''
+}
+function switchToMic() {
+    audioMode.value = 'mic'
+    recordedAudio.value = false
+    audioFile.value = null
+    audioUrl.value = ''
+}
+
+function onAudioChange(e) {
+    const file = e.target.files[0]
+    if (file) {
+        audioFile.value = file
+        audioUrl.value = URL.createObjectURL(file)
+        recordedAudio.value = false
+    } else {
+        audioFile.value = null
+        audioUrl.value = ''
+        recordedAudio.value = false
+    }
+}
+
+function startRecording() {
+    if (!navigator.mediaDevices?.getUserMedia) return
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            audioStream = stream
+            mediaRecorder = new MediaRecorder(stream)
+            audioChunks = []
+            mediaRecorder.ondataavailable = e => {
+                if (e.data.size > 0) audioChunks.push(e.data)
+            }
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(audioChunks, { type: 'audio/webm' })
+                audioFile.value = blob
+                audioUrl.value = URL.createObjectURL(blob)
+                recordedAudio.value = true
+                stopRecording(true)
+            }
+            mediaRecorder.start()
+            recording.value = true
+        })
+        .catch(() => {
+            error.value = 'Unable to access microphone.'
+        })
+}
+
+function stopRecording(silent) {
+    if (mediaRecorder && recording.value) {
+        mediaRecorder.stop()
+        recording.value = false
+    }
+    if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop())
+        audioStream = null
+    }
+    if (!silent) {
+        recordedAudio.value = true
+    }
+}
+
+function retakeAudio() {
+    recordedAudio.value = false
+    audioFile.value = null
+    audioUrl.value = ''
 }
 
 function cancelPrompt() {
     if (abortController.value) {
         abortController.value.abort()
+        abortController.value = null
+    }
+}
+
+async function sendPrompt() {
+    if (!isSupported.value || !inputText.value.trim() || !audioFile.value) return
+
+    isProcessing.value = true
+    error.value = ''
+    result.value = ''
+    abortController.value = new AbortController()
+
+    try {
+        const availability = await LanguageModel.availability()
+        if (availability === 'unavailable') {
+            throw new Error('Prompt API is not available.')
+        }
+
+        const options = {
+            expectedInputs: [{ type: 'audio' }],
+            signal: abortController.value.signal,
+            monitor(m) {
+                m.addEventListener('downloadprogress', (e) => {
+                    downloadProgress.value = e.loaded * 100
+                    downloadStatus.value = 'Downloading model...'
+                })
+            }
+        }
+
+        if (availability !== 'available') {
+            downloadStatus.value = 'Model is being downloaded. Please wait...'
+        }
+
+        session = await LanguageModel.create(options)
+        const audioBlob = audioFile.value
+        const promptContent = [
+            { type: 'text', value: inputText.value },
+            { type: 'audio', value: audioBlob }
+        ]
+        const response = await session.prompt([
+            { role: 'user', content: promptContent }
+        ], {
+            signal: abortController.value.signal,
+            temperature: temperature.value,
+            topK: topK.value
+        })
+        result.value = response
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            error.value = 'Operation cancelled'
+        } else {
+            error.value = err.message || 'Failed to get response'
+            console.error('Prompt error:', err)
+        }
+    } finally {
+        isProcessing.value = false
+        downloadStatus.value = ''
+        downloadProgress.value = 0
     }
 }
 </script>
