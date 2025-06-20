@@ -1,8 +1,5 @@
 <template>
     <div class="space-y-8">
-        <UAlert v-if="!isSupported" title="API Not Supported" color="error" variant="subtle"
-            description="This feature requires enabling Experimental Web Platform features in your browser."
-            class="mb-4" />
         <UCard>
             <template #header>
                 <div class="flex items-center justify-between">

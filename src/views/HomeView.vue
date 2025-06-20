@@ -12,10 +12,6 @@
             </p>
         </div>
 
-
-        <!-- API Status -->
-        <ApiStatus />
-
         <!-- Getting Started -->
         <div class="bg-gradient-to-br from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-xl p-8"
             style="border: 1px solid var(--ui-border)">
@@ -54,6 +50,11 @@
                 </div>
             </div>
         </div>
+
+        <!-- API Status -->
+        <ApiStatus />
+
+
     </div>
 </template>
 

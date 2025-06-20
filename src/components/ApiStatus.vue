@@ -14,36 +14,24 @@
       </UButton>
     </div>
 
-    <!-- Enable Flags Warning -->
-    <UAlert v-if="showEnableFlagsInstruction && hasChecked" title="Some APIs are not supported" color="warning"
-      variant="subtle" class="mb-6">
-      <template #description>
-        <div class="space-y-2">
-          <p>To enable built-in AI features, please enable 'Experimental Web Platform features' in your browser.</p>
-          <div class="flex items-center gap-2 text-sm">
-            <div class="i-heroicons-information-circle" />
-            <span>For Chrome: <code
-                class="bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-200 px-2 py-1 rounded">chrome://flags/#enable-experimental-web-platform-features</code></span>
-          </div>
-        </div>
-      </template>
-    </UAlert>
-
     <!-- API Status Grid -->
     <div v-if="hasChecked" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div v-for="api in apiList" :key="api.key" class="rounded-lg p-4 transition-colors hover:opacity-80"
         style="background-color: var(--ui-bg-elevated); border: 1px solid var(--ui-border)">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-            :class="apiStatus[api.key].supported ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'">
-            <div
-              :class="apiStatus[api.key].supported ? 'i-heroicons-check text-green-600 dark:text-green-400' : 'i-heroicons-x-mark text-red-600 dark:text-red-400'" />
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+            :class="apiStatus[api.key].supported ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-800'">
+            <UIcon :name="api.icon"
+              :class="apiStatus[api.key].supported ? 'text-primary-600 dark:text-primary-400 text-lg' : 'text-gray-400 dark:text-gray-500 text-lg'" />
           </div>
-          <div>
+          <div class="flex-1">
             <h3 class="font-medium" style="color: var(--ui-text)">{{ api.name }}</h3>
             <UBadge :color="apiStatus[api.key].supported ? 'primary' : 'error'" variant="subtle" size="sm">
               {{ apiStatus[api.key].status }}
             </UBadge>
+          </div>
+          <div v-if="apiStatus[api.key].supported" class="flex-shrink-0">
+            <UIcon name="i-heroicons-check-circle" class="text-green-500 text-xl" />
           </div>
         </div>
 
@@ -70,12 +58,12 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 const apiList = [
-  { key: 'summarizer', name: 'Summarizer API' },
-  { key: 'writer', name: 'Writer API' },
-  { key: 'rewriter', name: 'Rewriter API' },
-  { key: 'translator', name: 'Translator API' },
-  { key: 'languageDetector', name: 'Language Detector API' },
-  { key: 'prompt', name: 'Prompt API' },
+  { key: 'summarizer', name: 'Summarizer API', icon: 'i-heroicons-document-text' },
+  { key: 'writer', name: 'Writer API', icon: 'i-heroicons-pencil-square' },
+  { key: 'rewriter', name: 'Rewriter API', icon: 'i-heroicons-arrow-path' },
+  { key: 'translator', name: 'Translator API', icon: 'i-heroicons-language' },
+  { key: 'languageDetector', name: 'Language Detector API', icon: 'i-heroicons-magnifying-glass' },
+  { key: 'prompt', name: 'Prompt API', icon: 'i-heroicons-chat-bubble-left-right' },
 ]
 
 const apiStatus = ref({

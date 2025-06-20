@@ -1,8 +1,5 @@
 <template>
     <div class="space-y-8">
-        <UAlert v-if="!isSupported" title="API Not Supported" color="error" variant="subtle"
-            description="This feature requires enabling Experimental Web Platform features in your browser."
-            class="mb-4" />
         <UCard>
             <template #header>
                 <div class="flex items-center justify-between">
@@ -57,7 +54,7 @@
                                 <span class="font-mono">{{ res.detectedLanguage }}</span>
                                 <span class="ml-2 text-xs text-gray-500">Confidence: {{ (res.confidence *
                                     100).toFixed(2)
-                                }}%</span>
+                                    }}%</span>
                             </li>
                         </ul>
                     </div>
