@@ -32,6 +32,13 @@
                         instructions.
                     </p>
                 </div>
+
+                <!-- Example Prompts -->
+                <ExamplePrompts 
+                    :examples="examplePrompts" 
+                    @select="inputText = $event" 
+                />
+
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
                     variant="subtle" :description="downloadStatus" />
 
@@ -112,8 +119,28 @@
                         <UAlert color="error" variant="subtle" :title="error" />
                     </div>
 
+                    <!-- Performance Metrics -->
+                    <PerformanceMetrics :metrics="performanceMetrics" />
+
                     <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <h3 class="text-gray-500 mb-2">Response</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-gray-500">Response</h3>
+                            <UButton 
+                                @click="copyResult" 
+                                :color="copied ? 'success' : 'gray'" 
+                                variant="ghost"
+                                size="sm"
+                            >
+                                <template v-if="!copied">
+                                    <div class="i-heroicons-clipboard mr-1" />
+                                    Copy
+                                </template>
+                                <template v-else>
+                                    <div class="i-heroicons-check mr-1" />
+                                    Copied!
+                                </template>
+                            </UButton>
+                        </div>
                         <div v-if="outputType === 'structured' && formattedResult"
                             class="whitespace-pre-wrap font-mono text-sm">{{
                                 formattedResult }}</div>
@@ -122,6 +149,13 @@
                 </div>
             </div>
         </UCard>
+
+        <!-- History Panel -->
+        <HistoryPanel 
+            :history="history" 
+            @select="loadFromHistory"
+            @clear="clearHistory"
+        />
     </div>
 </template>
 
@@ -129,6 +163,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
+import ExamplePrompts from '../components/ExamplePrompts.vue'
+import PerformanceMetrics from '../components/PerformanceMetrics.vue'
+import HistoryPanel from '../components/HistoryPanel.vue'
+import { useHistory } from '../composables/useHistory.js'
+import { usePerformanceMetrics } from '../composables/usePerformanceMetrics.js'
 
 const inputText = ref('')
 const result = ref('')
@@ -146,7 +185,12 @@ const topK = ref(3)
 const minTopK = ref(1)
 const maxTopK = ref(8)
 const enableStreaming = ref(false)
+const copied = ref(false)
 let session = null
+
+// History and performance tracking
+const { history, addToHistory, clearHistory } = useHistory('prompt-history')
+const { metrics: performanceMetrics, startMeasurement, endMeasurement } = usePerformanceMetrics()
 
 const outputType = ref('text')
 const outputTypeOptions = [
@@ -161,6 +205,35 @@ const roleOptions = [
     { label: 'user', value: 'user' },
     { label: 'assistant', value: 'assistant' }
 ]
+
+// Example prompts
+const examplePrompts = [
+    {
+        title: "Creative Writing",
+        prompt: "Write a short story about a robot who discovers emotions for the first time."
+    },
+    {
+        title: "Code Explanation",
+        prompt: "Explain how async/await works in JavaScript with a simple example."
+    },
+    {
+        title: "Recipe Creation",
+        prompt: "Create a healthy breakfast recipe using eggs, spinach, and cheese."
+    },
+    {
+        title: "Problem Solving",
+        prompt: "How can I improve my productivity while working from home?"
+    },
+    {
+        title: "Learning Aid",
+        prompt: "Explain quantum computing in simple terms that a high school student would understand."
+    },
+    {
+        title: "Business Ideas",
+        prompt: "Suggest 5 innovative business ideas for sustainable technology."
+    }
+]
+
 function addInitialPrompt() {
     initialPrompts.value.push({ role: 'user', content: '' })
 }
@@ -234,6 +307,23 @@ ${promptCode}`
 
 const exampleCode = computed(() => generateExampleCode.value)
 
+async function copyResult() {
+    try {
+        await navigator.clipboard.writeText(result.value)
+        copied.value = true
+        setTimeout(() => {
+            copied.value = false
+        }, 2000)
+    } catch (err) {
+        console.error('Failed to copy:', err)
+    }
+}
+
+function loadFromHistory(item) {
+    inputText.value = item.input
+    result.value = item.output
+}
+
 onMounted(async () => {
     await fetchParams()
     await checkSupport()
@@ -305,6 +395,8 @@ async function sendPrompt() {
     error.value = ''
     result.value = ''
     abortController.value = new AbortController()
+    
+    startMeasurement()
 
     try {
         const availability = await LanguageModel.availability()
@@ -344,6 +436,15 @@ async function sendPrompt() {
             const response = await model.prompt(inputText.value)
             result.value = response
         }
+
+        // Add to history
+        addToHistory(inputText.value, result.value, {
+            temperature: temperature.value,
+            topK: topK.value,
+            streaming: enableStreaming.value
+        })
+
+        endMeasurement(inputText.value, result.value)
     } catch (err) {
         if (err.name === 'AbortError') {
             error.value = 'Operation cancelled'
