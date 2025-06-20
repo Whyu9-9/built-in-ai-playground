@@ -1,64 +1,81 @@
 <script setup>
 import { RouterView } from 'vue-router'
+import { onMounted } from 'vue'
 import Footer from './components/Footer.vue'
+import ThemeToggle from './components/ThemeToggle.vue'
+import { useThemeStore } from './stores/theme.js'
+
+const themeStore = useThemeStore()
+
+onMounted(() => {
+  themeStore.initializeTheme()
+})
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-gray-50 flex-col">
+  <div class="flex min-h-screen flex-col transition-colors" style="background-color: var(--ui-bg)">
     <div class="flex flex-1">
       <!-- Sidebar -->
-      <div class="w-72 bg-white border-r border-gray-200 shadow-sm">
+      <div class="w-72 shadow-sm transition-colors"
+        style="background-color: var(--ui-bg); border-right: 1px solid var(--ui-border)">
         <!-- Header -->
-        <div class="p-6 border-b border-gray-100">
-          <div class="flex items-center gap-3 mb-2">
+        <div class="p-6" style="border-bottom: 1px solid var(--ui-border)">
+          <div class="flex items-center justify-between mb-2">
             <div>
-              <h1 class="text-lg font-bold text-gray-900">Built-in AI</h1>
-              <p class="text-xs text-gray-500">Playground</p>
+              <h1 class="text-lg font-bold" style="color: var(--ui-text)">Built-in AI</h1>
+              <p class="text-xs" style="color: var(--ui-text-muted)">Playground</p>
             </div>
+            <ThemeToggle />
           </div>
         </div>
 
         <!-- Navigation -->
         <div class="p-4 space-y-2">
           <router-link to="/"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors"
-            active-class="bg-blue-50 text-blue-700 border border-blue-200">
+            class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+            style="color: var(--ui-text-muted)"
+            active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
             <div class="i-heroicons-home text-lg" />
             Home
           </router-link>
 
           <div class="pt-4">
-            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wider" style="color: var(--ui-text-muted)">
               High-Level APIs
             </div>
             <div class="mt-2 space-y-1">
               <router-link to="/summarizer"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-document-text text-lg" />
                 Summarizer
               </router-link>
               <router-link to="/writer"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-pencil text-lg" />
                 Writer
               </router-link>
               <router-link to="/rewriter"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-arrow-path text-lg" />
                 Rewriter
               </router-link>
               <router-link to="/translator"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-language text-lg" />
                 Translator
               </router-link>
               <router-link to="/language-detector"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-magnifying-glass text-lg" />
                 Language Detector
               </router-link>
@@ -66,25 +83,28 @@ import Footer from './components/Footer.vue'
           </div>
 
           <div class="pt-4">
-            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div class="px-3 py-2 text-xs font-semibold uppercase tracking-wider" style="color: var(--ui-text-muted)">
               Prompt APIs
             </div>
             <div class="mt-2 space-y-1">
               <router-link to="/prompt"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-chat-bubble-left-right text-lg" />
                 Text Prompt
               </router-link>
               <router-link to="/prompt-image"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-photo text-lg" />
                 Image Prompt
               </router-link>
               <router-link to="/prompt-audio"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
                 <div class="i-heroicons-musical-note text-lg" />
                 Audio Prompt
               </router-link>
@@ -106,6 +126,23 @@ import Footer from './components/Footer.vue'
   </div>
 </template>
 
+<style>
+/* Global link styles */
+a {
+  color: var(--color-primary-500);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--color-primary-600);
+}
+
+.dark a:hover {
+  color: var(--color-primary-400);
+}
+</style>
+
 <style scoped>
 /* Custom scrollbar for sidebar */
 .sidebar-scroll::-webkit-scrollbar {
@@ -117,11 +154,11 @@ import Footer from './components/Footer.vue'
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
+  background: var(--ui-border);
   border-radius: 2px;
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+  background: var(--ui-text-muted);
 }
 </style>

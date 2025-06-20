@@ -16,13 +16,11 @@
       </template>
 
       <div class="space-y-4">
+        <ApiExplainer :apiData="apiDocs.summarizer" />
         <div class="space-y-4" v-if="toggleCodeCollapse">
           <CodeExample :code="exampleCode" />
+
         </div>
-        <p class="text-gray-600 mb-4">
-          Generate concise summaries from longer text. Choose from different summary types like TL;DR, key points,
-          teasers, or headlines.
-        </p>
 
         <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
           :description="downloadStatus" />
@@ -97,6 +95,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const result = ref('')

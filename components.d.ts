@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    ApiExplainer: typeof import('./src/components/ApiExplainer.vue')['default']
     ApiStatus: typeof import('./src/components/ApiStatus.vue')['default']
     BaseDemo: typeof import('./src/components/BaseDemo.vue')['default']
     CodeExample: typeof import('./src/components/CodeExample.vue')['default']
@@ -23,6 +24,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     ShareButton: typeof import('./src/components/ShareButton.vue')['default']
     StreamingToggle: typeof import('./src/components/StreamingToggle.vue')['default']
+    ThemeToggle: typeof import('./src/components/ThemeToggle.vue')['default']
     UAlert: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Alert.vue')['default']
     UBadge: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Badge.vue')['default']
     UButton: typeof import('./node_modules/@nuxt/ui/dist/runtime/components/Button.vue')['default']

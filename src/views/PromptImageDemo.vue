@@ -14,14 +14,11 @@
         </template>
 
         <div class="space-y-4">
+            <ApiExplainer :apiData="apiDocs.prompt" />
             <div class="space-y-4" v-if="toggleCodeCollapse">
                 <CodeExample :code="exampleCode" />
-            </div>
 
-            <p class="text-gray-600 mb-4">
-                Send a text prompt and an image to Gemini Nano in Chrome and get a response directly in the browser.
-                Enter your prompt, upload an image, or capture one from your webcam, and see the result below.
-            </p>
+            </div>
 
             <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
                 :description="downloadStatus" />
@@ -116,6 +113,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const imageFile = ref(null)

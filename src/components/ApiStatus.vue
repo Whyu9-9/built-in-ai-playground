@@ -1,11 +1,11 @@
 <template>
-  <div class="bg-white rounded-xl border border-gray-200 p-6">
+  <div class="rounded-xl p-6" style="background-color: var(--ui-bg); border: 1px solid var(--ui-border)">
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <UIcon name="i-heroicons-cpu-chip" class="text-primary text-4xl" />
         <div>
-          <h2 class="text-xl font-bold text-gray-900">API Status</h2>
-          <p class="text-gray-600">Check which AI APIs are available in your browser</p>
+          <h2 class="text-xl font-bold" style="color: var(--ui-text)">API Status</h2>
+          <p style="color: var(--ui-text-muted)">Check which AI APIs are available in your browser</p>
         </div>
       </div>
       <UButton v-if="!hasChecked" @click="onCheckSupport" color="primary" size="lg">
@@ -23,7 +23,7 @@
           <div class="flex items-center gap-2 text-sm">
             <div class="i-heroicons-information-circle" />
             <span>For Chrome: <code
-                class="bg-yellow-100 px-2 py-1 rounded">chrome://flags/#enable-experimental-web-platform-features</code></span>
+                class="bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-200 px-2 py-1 rounded">chrome://flags/#enable-experimental-web-platform-features</code></span>
           </div>
         </div>
       </template>
@@ -31,16 +31,16 @@
 
     <!-- API Status Grid -->
     <div v-if="hasChecked" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="api in apiList" :key="api.key"
-        class="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-gray-300 transition-colors">
+      <div v-for="api in apiList" :key="api.key" class="rounded-lg p-4 transition-colors hover:opacity-80"
+        style="background-color: var(--ui-bg-elevated); border: 1px solid var(--ui-border)">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-8 h-8 rounded-lg flex items-center justify-center"
-            :class="apiStatus[api.key].supported ? 'bg-green-100' : 'bg-red-100'">
+            :class="apiStatus[api.key].supported ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'">
             <div
-              :class="apiStatus[api.key].supported ? 'i-heroicons-check text-green-600' : 'i-heroicons-x-mark text-red-600'" />
+              :class="apiStatus[api.key].supported ? 'i-heroicons-check text-green-600 dark:text-green-400' : 'i-heroicons-x-mark text-red-600 dark:text-red-400'" />
           </div>
           <div>
-            <h3 class="font-medium text-gray-900">{{ api.name }}</h3>
+            <h3 class="font-medium" style="color: var(--ui-text)">{{ api.name }}</h3>
             <UBadge :color="apiStatus[api.key].supported ? 'primary' : 'error'" variant="subtle" size="sm">
               {{ apiStatus[api.key].status }}
             </UBadge>
@@ -49,12 +49,12 @@
 
         <!-- Download Progress -->
         <div v-if="apiStatus[api.key].downloadProgress !== null" class="mt-3">
-          <div class="flex items-center justify-between text-xs text-gray-600 mb-1">
+          <div class="flex items-center justify-between text-xs mb-1" style="color: var(--ui-text-muted)">
             <span>Downloading model...</span>
             <span>{{ Math.round(apiStatus[api.key].downloadProgress * 100) }}%</span>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300"
+          <div class="w-full rounded-full h-2" style="background-color: var(--ui-border)">
+            <div class="h-2 rounded-full transition-all duration-300" style="background-color: var(--color-primary-500)"
               :style="{ width: `${apiStatus[api.key].downloadProgress * 100}%` }" />
           </div>
         </div>

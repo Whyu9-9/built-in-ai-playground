@@ -18,26 +18,10 @@
             </template>
 
             <div class="space-y-4">
+                <ApiExplainer :apiData="apiDocs.prompt" />
                 <div class="space-y-4" v-if="toggleCodeCollapse">
                     <CodeExample :code="exampleCode" />
                 </div>
-
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">Prompt API</h2>
-                    <p class="text-gray-600 mb-4">
-                        Send a text prompt to Gemini Nano in Chrome and get a response directly in the browser. Enter
-                        your
-                        prompt and see the result below. Optionally, request structured output by providing a JSON
-                        schema or
-                        instructions.
-                    </p>
-                </div>
-
-                <!-- Example Prompts -->
-                <ExamplePrompts 
-                    :examples="examplePrompts" 
-                    @select="inputText = $event" 
-                />
 
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
                     variant="subtle" :description="downloadStatus" />
@@ -119,18 +103,10 @@
                         <UAlert color="error" variant="subtle" :title="error" />
                     </div>
 
-                    <!-- Performance Metrics -->
-                    <PerformanceMetrics :metrics="performanceMetrics" />
-
                     <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
                         <div class="flex items-center justify-between mb-2">
                             <h3 class="text-gray-500">Response</h3>
-                            <UButton 
-                                @click="copyResult" 
-                                :color="copied ? 'success' : 'gray'" 
-                                variant="ghost"
-                                size="sm"
-                            >
+                            <UButton @click="copyResult" :color="copied ? 'success' : 'gray'" variant="ghost" size="sm">
                                 <template v-if="!copied">
                                     <div class="i-heroicons-clipboard mr-1" />
                                     Copy
@@ -150,12 +126,7 @@
             </div>
         </UCard>
 
-        <!-- History Panel -->
-        <HistoryPanel 
-            :history="history" 
-            @select="loadFromHistory"
-            @clear="clearHistory"
-        />
+
     </div>
 </template>
 
@@ -163,11 +134,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
-import ExamplePrompts from '../components/ExamplePrompts.vue'
-import PerformanceMetrics from '../components/PerformanceMetrics.vue'
-import HistoryPanel from '../components/HistoryPanel.vue'
-import { useHistory } from '../composables/useHistory.js'
-import { usePerformanceMetrics } from '../composables/usePerformanceMetrics.js'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const result = ref('')
@@ -188,9 +156,6 @@ const enableStreaming = ref(false)
 const copied = ref(false)
 let session = null
 
-// History and performance tracking
-const { history, addToHistory, clearHistory } = useHistory('prompt-history')
-const { metrics: performanceMetrics, startMeasurement, endMeasurement } = usePerformanceMetrics()
 
 const outputType = ref('text')
 const outputTypeOptions = [
@@ -204,34 +169,6 @@ const initialPrompts = ref([])
 const roleOptions = [
     { label: 'user', value: 'user' },
     { label: 'assistant', value: 'assistant' }
-]
-
-// Example prompts
-const examplePrompts = [
-    {
-        title: "Creative Writing",
-        prompt: "Write a short story about a robot who discovers emotions for the first time."
-    },
-    {
-        title: "Code Explanation",
-        prompt: "Explain how async/await works in JavaScript with a simple example."
-    },
-    {
-        title: "Recipe Creation",
-        prompt: "Create a healthy breakfast recipe using eggs, spinach, and cheese."
-    },
-    {
-        title: "Problem Solving",
-        prompt: "How can I improve my productivity while working from home?"
-    },
-    {
-        title: "Learning Aid",
-        prompt: "Explain quantum computing in simple terms that a high school student would understand."
-    },
-    {
-        title: "Business Ideas",
-        prompt: "Suggest 5 innovative business ideas for sustainable technology."
-    }
 ]
 
 function addInitialPrompt() {
@@ -319,11 +256,6 @@ async function copyResult() {
     }
 }
 
-function loadFromHistory(item) {
-    inputText.value = item.input
-    result.value = item.output
-}
-
 onMounted(async () => {
     await fetchParams()
     await checkSupport()
@@ -395,8 +327,6 @@ async function sendPrompt() {
     error.value = ''
     result.value = ''
     abortController.value = new AbortController()
-    
-    startMeasurement()
 
     try {
         const availability = await LanguageModel.availability()
@@ -436,15 +366,6 @@ async function sendPrompt() {
             const response = await model.prompt(inputText.value)
             result.value = response
         }
-
-        // Add to history
-        addToHistory(inputText.value, result.value, {
-            temperature: temperature.value,
-            topK: topK.value,
-            streaming: enableStreaming.value
-        })
-
-        endMeasurement(inputText.value, result.value)
     } catch (err) {
         if (err.name === 'AbortError') {
             error.value = 'Operation cancelled'

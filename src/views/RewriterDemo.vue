@@ -17,13 +17,11 @@
       </template>
 
       <div class="space-y-4">
+        <ApiExplainer :apiData="apiDocs.rewriter" />
         <div class="space-y-4" v-if="toggleCodeCollapse">
           <CodeExample :code="exampleCode" />
-        </div>
 
-        <p class="text-gray-600 mb-4">
-          Transform and rephrase existing text. Adjust the length, tone, and format to match your needs.
-        </p>
+        </div>
 
         <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
           :description="downloadStatus" />
@@ -87,6 +85,8 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const sharedContext = ref('')

@@ -1,14 +1,13 @@
 <template>
-    <footer class="bg-white border-t border-gray-200 mt-auto">
+    <footer class="mt-auto" style="background-color: var(--ui-bg); border-top: 1px solid var(--ui-border)">
         <div class="max-w-5xl mx-auto px-8 py-6">
-            <div class="text-center text-sm text-gray-600">
+            <div class="text-center text-sm" style="color: var(--ui-text-muted)">
                 Created by
-                <a href="https://cursor.sh" target="_blank" rel="noopener"
-                    class="text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors">Cursor
+                <a href="https://cursor.sh" target="_blank" rel="noopener" class="hover:underline font-medium">Cursor
                     AI</a>
                 and
                 <a href="https://thangman22.com" target="_blank" rel="noopener"
-                    class="text-blue-600 hover:text-blue-700 hover:underline font-medium transition-colors">@thangman22</a>
+                    class="hover:underline font-medium">@thangman22</a>
             </div>
         </div>
     </footer>

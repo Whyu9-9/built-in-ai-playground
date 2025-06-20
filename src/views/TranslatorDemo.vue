@@ -19,17 +19,10 @@
             </template>
 
             <div class="space-y-4">
+                <ApiExplainer :apiData="apiDocs.translator" />
                 <div class="space-y-4" v-if="toggleCodeCollapse">
                     <CodeExample :code="exampleCode" />
-                </div>
 
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">Translator API</h2>
-                    <p class="text-gray-600 mb-4">
-                        Translate text between languages directly in the browser using Chrome's built-in AI. Select
-                        source
-                        and target languages, enter your text, and get instant translations.
-                    </p>
                 </div>
 
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
@@ -78,6 +71,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const sourceLanguage = ref('en')

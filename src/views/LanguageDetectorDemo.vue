@@ -18,17 +18,10 @@
             </template>
 
             <div class="space-y-4">
+                <ApiExplainer :apiData="apiDocs.languageDetector" />
                 <div class="space-y-4" v-if="toggleCodeCollapse">
                     <CodeExample :code="exampleCode" />
-                </div>
 
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">Language Detector API</h2>
-                    <p class="text-gray-600 mb-4">
-                        Detect the language of input text directly in the browser using Chrome's built-in AI. Enter your
-                        text and
-                        get a ranked list of detected languages with confidence scores.
-                    </p>
                 </div>
 
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
@@ -77,6 +70,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
+import ApiExplainer from '../components/ApiExplainer.vue'
+import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
 const results = ref([])
