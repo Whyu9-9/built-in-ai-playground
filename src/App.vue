@@ -11,9 +11,6 @@ import Footer from './components/Footer.vue'
         <!-- Header -->
         <div class="p-6 border-b border-gray-100">
           <div class="flex items-center gap-3 mb-2">
-            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <div class="i-heroicons-cpu-chip text-white text-lg" />
-            </div>
             <div>
               <h1 class="text-lg font-bold text-gray-900">Built-in AI</h1>
               <p class="text-xs text-gray-500">Playground</p>
@@ -23,38 +20,44 @@ import Footer from './components/Footer.vue'
 
         <!-- Navigation -->
         <div class="p-4 space-y-2">
-          <router-link to="/" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+          <router-link to="/"
+            class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors"
             active-class="bg-blue-50 text-blue-700 border border-blue-200">
             <div class="i-heroicons-home text-lg" />
             Home
           </router-link>
-          
+
           <div class="pt-4">
             <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              AI APIs
+              High-Level APIs
             </div>
             <div class="mt-2 space-y-1">
-              <router-link to="/summarizer" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/summarizer"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-document-text text-lg" />
                 Summarizer
               </router-link>
-              <router-link to="/writer" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/writer"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-pencil text-lg" />
                 Writer
               </router-link>
-              <router-link to="/rewriter" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/rewriter"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-arrow-path text-lg" />
                 Rewriter
               </router-link>
-              <router-link to="/translator" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/translator"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-language text-lg" />
                 Translator
               </router-link>
-              <router-link to="/language-detector" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/language-detector"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-magnifying-glass text-lg" />
                 Language Detector
@@ -67,17 +70,20 @@ import Footer from './components/Footer.vue'
               Prompt APIs
             </div>
             <div class="mt-2 space-y-1">
-              <router-link to="/prompt" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/prompt"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-chat-bubble-left-right text-lg" />
                 Text Prompt
               </router-link>
-              <router-link to="/prompt-image" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/prompt-image"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-photo text-lg" />
                 Image Prompt
               </router-link>
-              <router-link to="/prompt-audio" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+              <router-link to="/prompt-audio"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
                 active-class="bg-blue-50 text-blue-700 border border-blue-200">
                 <div class="i-heroicons-musical-note text-lg" />
                 Audio Prompt

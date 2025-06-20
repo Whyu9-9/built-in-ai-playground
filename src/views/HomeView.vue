@@ -2,10 +2,7 @@
     <div class="space-y-8">
         <!-- Hero Section -->
         <div class="text-center py-12">
-            <div
-                class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <div class="i-heroicons-cpu-chip text-white text-2xl" />
-            </div>
+
             <h1 class="text-4xl font-bold text-gray-900 mb-4">
                 Built-in AI API Playground
             </h1>
