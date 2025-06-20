@@ -30,6 +30,28 @@ export function useFormOptions() {
     { label: 'Assistant', value: 'assistant' },
   ]
 
+  const styleOptions = [
+    { label: 'Formal', value: 'formal' },
+    { label: 'Casual', value: 'casual' },
+    { label: 'Professional', value: 'professional' },
+    { label: 'Creative', value: 'creative' },
+  ]
+
+  const languageOptions = [
+    { label: 'Auto Detect', value: 'auto' },
+    { label: 'English', value: 'en' },
+    { label: 'Spanish', value: 'es' },
+    { label: 'French', value: 'fr' },
+    { label: 'German', value: 'de' },
+    { label: 'Italian', value: 'it' },
+    { label: 'Portuguese', value: 'pt' },
+    { label: 'Russian', value: 'ru' },
+    { label: 'Japanese', value: 'ja' },
+    { label: 'Korean', value: 'ko' },
+    { label: 'Chinese (Simplified)', value: 'zh-cn' },
+    { label: 'Chinese (Traditional)', value: 'zh-tw' },
+  ]
+
   return {
     temperature,
     minTemperature,
@@ -41,5 +63,7 @@ export function useFormOptions() {
     formatOptions,
     lengthOptions,
     roleOptions,
+    styleOptions,
+    languageOptions,
   }
 }

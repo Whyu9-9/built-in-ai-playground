@@ -4,60 +4,85 @@ import Footer from './components/Footer.vue'
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-white flex-col">
+  <div class="flex min-h-screen bg-gray-50 flex-col">
     <div class="flex flex-1">
       <!-- Sidebar -->
-      <div class="w-72 bg-white border-r border-gray-200 p-4">
-        <div class="mb-6">
-          <div class="px-3 py-2 bg-gray-100 rounded-lg inline-block text-sm font-medium">
-            Built-in AI Playground
+      <div class="w-72 bg-white border-r border-gray-200 shadow-sm">
+        <!-- Header -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div class="i-heroicons-cpu-chip text-white text-lg" />
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-gray-900">Built-in AI</h1>
+              <p class="text-xs text-gray-500">Playground</p>
+            </div>
           </div>
         </div>
 
         <!-- Navigation -->
-        <div class="space-y-1">
-          <router-link to="/" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md font-medium"
-            active-class="bg-gray-100 text-gray-900">
+        <div class="p-4 space-y-2">
+          <router-link to="/" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg font-medium transition-colors"
+            active-class="bg-blue-50 text-blue-700 border border-blue-200">
+            <div class="i-heroicons-home text-lg" />
             Home
           </router-link>
-          <div class="px-3 py-2 text-sm font-medium text-gray-900">
-            Prompt
+          
+          <div class="pt-4">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              AI APIs
+            </div>
+            <div class="mt-2 space-y-1">
+              <router-link to="/summarizer" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-document-text text-lg" />
+                Summarizer
+              </router-link>
+              <router-link to="/writer" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-pencil text-lg" />
+                Writer
+              </router-link>
+              <router-link to="/rewriter" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-arrow-path text-lg" />
+                Rewriter
+              </router-link>
+              <router-link to="/translator" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-language text-lg" />
+                Translator
+              </router-link>
+              <router-link to="/language-detector" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-magnifying-glass text-lg" />
+                Language Detector
+              </router-link>
+            </div>
           </div>
-          <div class="pl-6 space-y-1">
 
-            <router-link to="/summarizer" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Summarizer API
-            </router-link>
-            <router-link to="/writer" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Writer API
-            </router-link>
-            <router-link to="/rewriter" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Rewriter API
-            </router-link>
-            <router-link to="/translator" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Translator API
-            </router-link>
-            <router-link to="/language-detector"
-              class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Language Detector API
-            </router-link>
-            <router-link to="/prompt" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Prompt API
-            </router-link>
-            <router-link to="/prompt-image" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Prompt API with Image
-            </router-link>
-            <router-link to="/prompt-audio" class="block px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md"
-              active-class="bg-gray-100 text-gray-900">
-              Prompt API with Audio
-            </router-link>
+          <div class="pt-4">
+            <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              Prompt APIs
+            </div>
+            <div class="mt-2 space-y-1">
+              <router-link to="/prompt" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-chat-bubble-left-right text-lg" />
+                Text Prompt
+              </router-link>
+              <router-link to="/prompt-image" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-photo text-lg" />
+                Image Prompt
+              </router-link>
+              <router-link to="/prompt-audio" class="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                active-class="bg-blue-50 text-blue-700 border border-blue-200">
+                <div class="i-heroicons-musical-note text-lg" />
+                Audio Prompt
+              </router-link>
+            </div>
           </div>
         </div>
       </div>
@@ -65,7 +90,7 @@ import Footer from './components/Footer.vue'
       <!-- Main Content -->
       <div class="flex-1 min-w-0 flex flex-col">
         <main class="flex-1 p-8">
-          <div class="max-w-4xl mx-auto">
+          <div class="max-w-5xl mx-auto">
             <RouterView />
           </div>
         </main>
@@ -76,65 +101,21 @@ import Footer from './components/Footer.vue'
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+/* Custom scrollbar for sidebar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
 }
 </style>
