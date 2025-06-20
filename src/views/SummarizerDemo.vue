@@ -17,7 +17,6 @@
 
       <div class="space-y-4">
         <div class="space-y-4" v-if="toggleCodeCollapse">
-          <h2 class="text-xl font-semibold">Example Usage</h2>
           <CodeExample :code="exampleCode" />
         </div>
         <p class="text-gray-600 mb-4">

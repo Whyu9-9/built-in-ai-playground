@@ -15,7 +15,6 @@
 
         <div class="space-y-4">
             <div class="space-y-4" v-if="toggleCodeCollapse">
-                <h2 class="text-xl font-semibold">Example Usage</h2>
                 <CodeExample :code="exampleCode" />
             </div>
 
@@ -173,7 +172,7 @@ const audioData = await audioFile.arrayBuffer()
 
 // Create a prompt with both text and audio
 const prompt = {
-  text: ${promptText.value ? `'${promptText.value.replace(/'/g, "\\'")}'` : "'What is being said in this audio?'"},
+  text: ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'What is being said in this audio?'"},
   audio: audioData
 }
 

@@ -18,6 +18,10 @@
             </template>
 
             <div class="space-y-4">
+                <div class="space-y-4" v-if="toggleCodeCollapse">
+                    <CodeExample :code="exampleCode" />
+                </div>
+
                 <div>
                     <h2 class="text-2xl font-bold mb-2">Prompt API</h2>
                     <p class="text-gray-600 mb-4">
@@ -118,10 +122,6 @@
                 </div>
             </div>
         </UCard>
-        <div class="space-y-4" v-if="toggleCodeCollapse">
-            <h2 class="text-xl font-semibold">Example Usage</h2>
-            <CodeExample :code="exampleCode" />
-        </div>
     </div>
 </template>
 

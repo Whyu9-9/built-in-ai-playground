@@ -15,7 +15,6 @@
 
         <div class="space-y-4">
             <div class="space-y-4" v-if="toggleCodeCollapse">
-                <h2 class="text-xl font-semibold">Example Usage</h2>
                 <CodeExample :code="exampleCode" />
             </div>
 
@@ -173,7 +172,7 @@ const imageData = await imageFile.arrayBuffer()
 
 // Create a prompt with both text and image
 const prompt = {
-  text: ${promptText.value ? `'${promptText.value.replace(/'/g, "\\'")}'` : "'What can you tell me about this image?'"},
+  text: ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'What can you tell me about this image?'"},
   images: [imageData]
 }
 

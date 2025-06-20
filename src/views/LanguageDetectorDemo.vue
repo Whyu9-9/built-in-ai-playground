@@ -18,6 +18,10 @@
             </template>
 
             <div class="space-y-4">
+                <div class="space-y-4" v-if="toggleCodeCollapse">
+                    <CodeExample :code="exampleCode" />
+                </div>
+
                 <div>
                     <h2 class="text-2xl font-bold mb-2">Language Detector API</h2>
                     <p class="text-gray-600 mb-4">
@@ -26,6 +30,7 @@
                         get a ranked list of detected languages with confidence scores.
                     </p>
                 </div>
+
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
                     variant="subtle" :description="downloadStatus" />
 
@@ -59,17 +64,13 @@
                                 <span class="font-mono">{{ res.detectedLanguage }}</span>
                                 <span class="ml-2 text-xs text-gray-500">Confidence: {{ (res.confidence *
                                     100).toFixed(2)
-                                    }}%</span>
+                                }}%</span>
                             </li>
                         </ul>
                     </div>
                 </div>
             </div>
         </UCard>
-        <div class="space-y-4" v-if="toggleCodeCollapse">
-            <h2 class="text-xl font-semibold">Example Usage</h2>
-            <CodeExample :code="exampleCode" />
-        </div>
     </div>
 </template>
 

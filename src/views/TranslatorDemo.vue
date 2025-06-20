@@ -20,14 +20,17 @@
 
             <div class="space-y-4">
                 <div class="space-y-4" v-if="toggleCodeCollapse">
-                    <h2 class="text-xl font-semibold">Example Usage</h2>
                     <CodeExample :code="exampleCode" />
                 </div>
 
-                <p class="text-gray-600 mb-4">
-                    Translate text between languages directly in the browser using Chrome's built-in AI. Select source
-                    and target languages, enter your text, and get instant translations.
-                </p>
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Translator API</h2>
+                    <p class="text-gray-600 mb-4">
+                        Translate text between languages directly in the browser using Chrome's built-in AI. Select
+                        source
+                        and target languages, enter your text, and get instant translations.
+                    </p>
+                </div>
 
                 <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'"
                     variant="subtle" :description="downloadStatus" />
