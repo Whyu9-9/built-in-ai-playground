@@ -117,6 +117,10 @@ async function checkSingleApi({ key, globalName, availabilityArgs = {}, createAr
             createArgs.monitor = (m) => {
               m.addEventListener('downloadprogress', e => {
                 apiStatus.value[key].downloadProgress = e.loaded
+                if (e.loaded === 1) {
+                  apiStatus.value[key].status = 'Available'
+                  apiStatus.value[key].downloadProgress = null
+                }
               })
             }
             await apiObj.create(createArgs)
