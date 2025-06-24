@@ -35,7 +35,7 @@ onMounted(() => {
             class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
             style="color: var(--ui-text-muted)"
             active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-            <div class="i-heroicons-home text-lg" />
+            <UIcon name="i-heroicons-home" class="text-lg" />
             Home
           </router-link>
 
@@ -48,35 +48,35 @@ onMounted(() => {
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-document-text text-lg" />
+                <UIcon name="i-heroicons-document-text" class="text-lg" />
                 Summarizer
               </router-link>
               <router-link to="/writer"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-pencil text-lg" />
+                <UIcon name="i-heroicons-pencil" class="text-lg" />
                 Writer
               </router-link>
               <router-link to="/rewriter"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-arrow-path text-lg" />
+                <UIcon name="i-heroicons-arrow-path" class="text-lg" />
                 Rewriter
               </router-link>
               <router-link to="/translator"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-language text-lg" />
+                <UIcon name="i-heroicons-language" class="text-lg" />
                 Translator
               </router-link>
               <router-link to="/language-detector"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-magnifying-glass text-lg" />
+                <UIcon name="i-heroicons-language" class="text-lg" />
                 Language Detector
               </router-link>
             </div>
@@ -91,21 +91,21 @@ onMounted(() => {
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-chat-bubble-left-right text-lg" />
+                <UIcon name="i-heroicons-chat-bubble-left-right" class="text-lg" />
                 Text Prompt
               </router-link>
               <router-link to="/prompt-image"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-photo text-lg" />
+                <UIcon name="i-heroicons-photo" class="text-lg" />
                 Image Prompt
               </router-link>
               <router-link to="/prompt-audio"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <div class="i-heroicons-musical-note text-lg" />
+                <UIcon name="i-heroicons-musical-note" class="text-lg" />
                 Audio Prompt
               </router-link>
             </div>

@@ -9,7 +9,7 @@
         </div>
       </div>
       <UButton v-if="!hasChecked" @click="onCheckSupport" color="primary" size="lg">
-        <div class="i-heroicons-play mr-2" />
+        <UIcon name="i-heroicons-play" />
         Check API Support
       </UButton>
     </div>

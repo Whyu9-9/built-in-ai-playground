@@ -4,7 +4,7 @@
             <template #header>
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <div class="i-heroicons-code-bracket-20-solid text-lg" />
+                        <UIcon name="i-heroicons-code-bracket-20-solid" class="text-lg" />
                         <h3 class="text-lg font-semibold">Prompt API</h3>
                     </div>
                     <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
@@ -100,25 +100,8 @@
                         <UAlert color="error" variant="subtle" :title="error" />
                     </div>
 
-                    <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <h3 class="text-gray-500">Response</h3>
-                            <UButton @click="copyResult" :color="copied ? 'success' : 'gray'" variant="ghost" size="sm">
-                                <template v-if="!copied">
-                                    <div class="i-heroicons-clipboard mr-1" />
-                                    Copy
-                                </template>
-                                <template v-else>
-                                    <div class="i-heroicons-check mr-1" />
-                                    Copied!
-                                </template>
-                            </UButton>
-                        </div>
-                        <div v-if="outputType === 'structured' && formattedResult"
-                            class="whitespace-pre-wrap font-mono text-sm">{{
-                                formattedResult }}</div>
-                        <div v-else class="whitespace-pre-wrap">{{ result }}</div>
-                    </div>
+                    <ResultDisplay :result="result" title="Response"
+                        :format="outputType === 'structured' ? 'structured' : 'text'" ref="resultDisplay" />
                 </div>
             </div>
         </UCard>
@@ -132,6 +115,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
+import ResultDisplay from '../components/ResultDisplay.vue'
 import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
@@ -150,7 +134,6 @@ const topK = ref(3)
 const minTopK = ref(1)
 const maxTopK = ref(8)
 const enableStreaming = ref(false)
-const copied = ref(false)
 let session = null
 
 
@@ -240,18 +223,6 @@ ${promptCode}`
 })
 
 const exampleCode = computed(() => generateExampleCode.value)
-
-async function copyResult() {
-    try {
-        await navigator.clipboard.writeText(result.value)
-        copied.value = true
-        setTimeout(() => {
-            copied.value = false
-        }, 2000)
-    } catch (err) {
-        console.error('Failed to copy:', err)
-    }
-}
 
 onMounted(async () => {
     await fetchParams()

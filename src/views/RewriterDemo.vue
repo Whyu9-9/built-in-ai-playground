@@ -5,7 +5,7 @@
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <div class="i-heroicons-code-bracket-20-solid text-lg" />
+            <UIcon name="i-heroicons-code-bracket-20-solid" class="text-lg" />
             <h3 class="text-lg font-semibold">Rewriter API</h3>
           </div>
           <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse" icon="i-heroicons-code-bracket-20-solid">
@@ -69,10 +69,7 @@
             <UAlert color="error" variant="subtle" :title="error" />
           </div>
 
-          <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-            <h3 class="text-gray-500 mb-2">Rewritten Text</h3>
-            <div class="whitespace-pre-wrap">{{ result }}</div>
-          </div>
+          <ResultDisplay :result="result" title="Rewritten Text" ref="resultDisplay" />
         </div>
       </div>
     </UCard>
@@ -84,6 +81,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
+import ResultDisplay from '../components/ResultDisplay.vue'
 import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
