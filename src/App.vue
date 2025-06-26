@@ -76,7 +76,7 @@ onMounted(() => {
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-                <UIcon name="i-heroicons-language" class="text-lg" />
+                <UIcon name="i-heroicons-document-check" class="text-lg" />
                 Language Detector
               </router-link>
             </div>
