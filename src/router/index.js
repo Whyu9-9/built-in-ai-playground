@@ -8,6 +8,7 @@ import LanguageDetectorDemo from '../views/LanguageDetectorDemo.vue'
 import PromptDemo from '../views/PromptDemo.vue'
 import PromptImageDemo from '../views/PromptImageDemo.vue'
 import PromptAudioDemo from '../views/PromptAudioDemo.vue'
+import ProofreaderDemo from '../views/ProofreaderDemo.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/prompt-audio',
       name: 'prompt-audio',
       component: PromptAudioDemo,
+    },
+    {
+      path: '/proofreader',
+      name: 'proofreader',
+      component: ProofreaderDemo,
     },
   ],
 })
