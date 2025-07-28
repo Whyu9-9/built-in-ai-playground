@@ -3,16 +3,15 @@
         <div class="max-w-5xl mx-auto px-8 py-6">
             <div class="text-center space-y-2">
                 <div class="text-sm" style="color: var(--ui-text-muted)">
-                    Created by
+                    Improved with
                     <a href="https://cursor.sh" target="_blank" rel="noopener"
-                        class="hover:underline font-medium">Cursor
-                        AI</a>
-                    and
-                    <a href="https://thangman22.com" target="_blank" rel="noopener"
+                        class="hover:underline font-medium">Cursor AI</a>,
+                    Forked from
+                    <a href="https://github.com/thangman22/built-in-ai-playground" target="_blank" rel="noopener"
                         class="hover:underline font-medium">@thangman22</a>
                 </div>
                 <div class="text-sm" style="color: var(--ui-text-muted)">
-                    <a href="https://github.com/thangman22/built-in-ai-playground" target="_blank" rel="noopener"
+                    <a href="https://github.com/Whyu9-9/built-in-ai-playground" target="_blank" rel="noopener"
                         class="inline-flex items-center gap-1 hover:underline font-medium">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"

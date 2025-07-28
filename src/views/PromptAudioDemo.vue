@@ -3,7 +3,7 @@
         <template #header>
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <div class="i-heroicons-code-bracket-20-solid text-lg" />
+                    <UIcon name="i-heroicons-code-bracket-20-solid" class="text-lg" />
                     <h3 class="text-lg font-semibold">Prompt API (Audio)</h3>
                 </div>
                 <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse"
@@ -58,6 +58,24 @@
                                 <span class="text-red-500 font-bold">● Recording...</span>
                                 <UButton @click="stopRecording" color="primary">Stop</UButton>
                             </div>
+                            <!-- Volume Meter -->
+                            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <UIcon name="i-heroicons-speaker-wave" class="text-gray-600 dark:text-gray-400" />
+                                    <span class="text-sm font-medium">Volume Level</span>
+                                </div>
+                                <div class="volume-meter">
+                                    <div class="volume-bars">
+                                        <div v-for="(bar, index) in volumeBars" :key="index" class="volume-bar" :style="{
+                                            height: `${bar}%`,
+                                            backgroundColor: getBarColor(bar)
+                                        }"></div>
+                                    </div>
+                                    <div class="volume-text">
+                                        {{ Math.round(currentVolume) }}%
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div v-else-if="recordedAudio">
                             <audio :src="audioUrl" controls class="w-full mb-2" />
@@ -99,10 +117,8 @@
                     <UAlert color="error" variant="subtle" :title="error" />
                 </div>
 
-                <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-                    <h3 class="text-gray-500 mb-2">Response</h3>
-                    <div class="whitespace-pre-wrap">{{ result }}</div>
-                </div>
+                <ResultDisplay :result="result" title="Response" ref="resultDisplay" />
+
             </div>
         </div>
     </UCard>
@@ -112,6 +128,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
+import ResultDisplay from '../components/ResultDisplay.vue'
 import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
@@ -133,6 +150,14 @@ let mediaRecorder = null
 let audioChunks = []
 let audioStream = null
 
+// Volume visualization
+const currentVolume = ref(0)
+const volumeBars = ref(Array(20).fill(0))
+let audioContext = null
+let analyser = null
+let microphone = null
+let animationFrame = null
+
 const temperature = ref(1.0)
 const minTemperature = ref(0.0)
 const maxTemperature = ref(2.0)
@@ -143,6 +168,47 @@ const maxTopK = ref(8)
 const canProcess = computed(() => inputText.value.trim().length > 0 && audioFile.value)
 
 const toggleCodeCollapse = ref(false)
+
+// Function to get color based on volume level
+function getBarColor(volume) {
+    if (volume < 30) return '#10b981' // green for low
+    if (volume < 70) return '#f59e0b' // yellow for medium
+    return '#ef4444' // red for high
+}
+
+// Function to update volume visualization
+function updateVolumeVisualization() {
+    if (!analyser || !recording.value) return
+
+    const dataArray = new Uint8Array(analyser.frequencyBinCount)
+    analyser.getByteTimeDomainData(dataArray)
+
+    // Calculate RMS (Root Mean Square) for better volume representation
+    let sum = 0
+    for (let i = 0; i < dataArray.length; i++) {
+        const sample = (dataArray[i] - 128) / 128 // Convert to -1 to 1 range
+        sum += sample * sample
+    }
+    const rms = Math.sqrt(sum / dataArray.length)
+
+    // Convert RMS to volume percentage with better scaling
+    currentVolume.value = Math.min(100, rms * 200) // Scale factor adjusted for better range
+
+    // Update volume bars with smooth animation
+    const newBars = [...volumeBars.value]
+    for (let i = 0; i < newBars.length; i++) {
+        // Create a more dynamic visualization
+        const baseHeight = currentVolume.value * 0.6
+        const randomFactor = Math.random() * 0.4 + 0.8 // 0.8 to 1.2
+        const targetHeight = baseHeight * randomFactor
+        newBars[i] = newBars[i] * 0.7 + targetHeight * 0.3 // Faster response
+    }
+    volumeBars.value = newBars
+
+    if (recording.value) {
+        animationFrame = requestAnimationFrame(updateVolumeVisualization)
+    }
+}
 
 const generateExampleCode = computed(() => {
     return `const available = await LanguageModel.availability()
@@ -192,6 +258,14 @@ onUnmounted(() => {
         session.destroy()
     }
     stopRecording(true)
+
+    // Additional cleanup for audio analysis
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+    }
+    if (audioContext) {
+        audioContext.close()
+    }
 })
 
 async function fetchParams() {
@@ -282,10 +356,30 @@ function startRecording() {
             }
             mediaRecorder.start()
             recording.value = true
+
+            // Setup audio analysis for volume visualization
+            setupAudioAnalysis(stream)
         })
         .catch(() => {
             error.value = 'Unable to access microphone.'
         })
+}
+
+function setupAudioAnalysis(stream) {
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)()
+        analyser = audioContext.createAnalyser()
+        analyser.fftSize = 512 // Increased for better resolution
+        analyser.smoothingTimeConstant = 0.3 // Less smoothing for more responsive visualization
+
+        microphone = audioContext.createMediaStreamSource(stream)
+        microphone.connect(analyser)
+
+        // Start volume visualization
+        updateVolumeVisualization()
+    } catch (err) {
+        console.warn('Audio analysis not supported:', err)
+    }
 }
 
 function stopRecording(silent) {
@@ -297,6 +391,23 @@ function stopRecording(silent) {
         audioStream.getTracks().forEach(track => track.stop())
         audioStream = null
     }
+
+    // Clean up audio analysis
+    if (animationFrame) {
+        cancelAnimationFrame(animationFrame)
+        animationFrame = null
+    }
+    if (audioContext) {
+        audioContext.close()
+        audioContext = null
+    }
+    analyser = null
+    microphone = null
+
+    // Reset volume visualization
+    currentVolume.value = 0
+    volumeBars.value = Array(20).fill(0)
+
     if (!silent) {
         recordedAudio.value = true
     }
@@ -372,3 +483,39 @@ async function sendPrompt() {
     }
 }
 </script>
+
+<style scoped>
+.volume-meter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.volume-bars {
+    display: flex;
+    align-items: end;
+    gap: 2px;
+    height: 60px;
+    flex: 1;
+}
+
+.volume-bar {
+    width: 8px;
+    min-height: 4px;
+    border-radius: 2px;
+    transition: height 0.1s ease-out, background-color 0.1s ease-out;
+    background: linear-gradient(to top, currentColor, currentColor);
+}
+
+.volume-text {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 40px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.dark .volume-text {
+    color: #9ca3af;
+}
+</style>
