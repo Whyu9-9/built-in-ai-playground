@@ -1,11 +1,16 @@
 <template>
-  <div class="rounded-xl p-6" style="background-color: var(--ui-bg); border: 1px solid var(--ui-border)">
+  <div
+    class="rounded-xl p-6"
+    style="background-color: var(--ui-bg); border: 1px solid var(--ui-border)"
+  >
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <UIcon name="i-heroicons-cpu-chip" class="text-primary text-4xl" />
         <div>
           <h2 class="text-xl font-bold" style="color: var(--ui-text)">API Status</h2>
-          <p style="color: var(--ui-text-muted)">Check which AI APIs are available in your browser</p>
+          <p style="color: var(--ui-text-muted)">
+            Check which AI APIs are available in your browser
+          </p>
         </div>
       </div>
       <UButton v-if="!hasChecked" @click="onCheckSupport" color="primary" size="lg">
@@ -16,17 +21,37 @@
 
     <!-- API Status Grid -->
     <div v-if="hasChecked" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="api in apiList" :key="api.key" class="rounded-lg p-4 transition-colors hover:opacity-80"
-        style="background-color: var(--ui-bg-elevated); border: 1px solid var(--ui-border)">
+      <div
+        v-for="api in apiList"
+        :key="api.key"
+        class="rounded-lg p-4 transition-colors hover:opacity-80"
+        style="background-color: var(--ui-bg-elevated); border: 1px solid var(--ui-border)"
+      >
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center"
-            :class="apiStatus[api.key].supported ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-800'">
-            <UIcon :name="api.icon"
-              :class="apiStatus[api.key].supported ? 'text-primary-600 dark:text-primary-400 text-lg' : 'text-gray-400 dark:text-gray-500 text-lg'" />
+          <div
+            class="w-10 h-10 rounded-lg flex items-center justify-center"
+            :class="
+              apiStatus[api.key].supported
+                ? 'bg-primary-100 dark:bg-primary-900/30'
+                : 'bg-gray-100 dark:bg-gray-800'
+            "
+          >
+            <UIcon
+              :name="api.icon"
+              :class="
+                apiStatus[api.key].supported
+                  ? 'text-primary-600 dark:text-primary-400 text-lg'
+                  : 'text-gray-400 dark:text-gray-500 text-lg'
+              "
+            />
           </div>
           <div class="flex-1">
             <h3 class="font-medium" style="color: var(--ui-text)">{{ api.name }}</h3>
-            <UBadge :color="apiStatus[api.key].supported ? 'primary' : 'error'" variant="subtle" size="sm">
+            <UBadge
+              :color="apiStatus[api.key].supported ? 'primary' : 'error'"
+              variant="subtle"
+              size="sm"
+            >
               {{ apiStatus[api.key].status }}
             </UBadge>
           </div>
@@ -37,13 +62,19 @@
 
         <!-- Download Progress -->
         <div v-if="apiStatus[api.key].downloadProgress !== null" class="mt-3">
-          <div class="flex items-center justify-between text-xs mb-1" style="color: var(--ui-text-muted)">
+          <div
+            class="flex items-center justify-between text-xs mb-1"
+            style="color: var(--ui-text-muted)"
+          >
             <span>Downloading model...</span>
             <span>{{ Math.round(apiStatus[api.key].downloadProgress * 100) }}%</span>
           </div>
           <div class="w-full rounded-full h-2" style="background-color: var(--ui-border)">
-            <div class="h-2 rounded-full transition-all duration-300" style="background-color: var(--color-primary-500)"
-              :style="{ width: `${apiStatus[api.key].downloadProgress * 100}%` }" />
+            <div
+              class="h-2 rounded-full transition-all duration-300"
+              style="background-color: var(--color-primary-500)"
+              :style="{ width: `${apiStatus[api.key].downloadProgress * 100}%` }"
+            />
           </div>
         </div>
       </div>
@@ -64,6 +95,7 @@ const apiList = [
   { key: 'translator', name: 'Translator API', icon: 'i-heroicons-language' },
   { key: 'languageDetector', name: 'Language Detector API', icon: 'i-heroicons-magnifying-glass' },
   { key: 'prompt', name: 'Prompt API', icon: 'i-heroicons-chat-bubble-left-right' },
+  { key: 'proofreader', name: 'Proofreader API', icon: 'i-heroicons-check-badge' },
 ]
 
 const apiStatus = ref({
@@ -72,7 +104,8 @@ const apiStatus = ref({
   rewriter: { supported: false, status: 'Checking...', downloadProgress: null },
   translator: { supported: false, status: 'Checking...', downloadProgress: null },
   languageDetector: { supported: false, status: 'Checking...', downloadProgress: null },
-  prompt: { supported: false, status: 'Checking...', downloadProgress: null }
+  prompt: { supported: false, status: 'Checking...', downloadProgress: null },
+  proofreader: { supported: false, status: 'Checking...', downloadProgress: null },
 })
 
 const error = ref('')
@@ -90,7 +123,13 @@ onUnmounted(() => {
   }
 })
 
-async function checkSingleApi({ key, globalName, availabilityArgs = {}, createArgs = {}, monitorDownload = false }) {
+async function checkSingleApi({
+  key,
+  globalName,
+  availabilityArgs = {},
+  createArgs = {},
+  monitorDownload = false,
+}) {
   if (globalName in self) {
     const apiObj = self[globalName]
     let availability
@@ -115,7 +154,7 @@ async function checkSingleApi({ key, globalName, availabilityArgs = {}, createAr
         if (monitorDownload && typeof apiObj.create === 'function') {
           try {
             createArgs.monitor = (m) => {
-              m.addEventListener('downloadprogress', e => {
+              m.addEventListener('downloadprogress', (e) => {
                 apiStatus.value[key].downloadProgress = e.loaded
                 if (e.loaded === 1) {
                   apiStatus.value[key].status = 'Available'
@@ -151,10 +190,15 @@ async function checkApiStatus() {
         globalName: 'Translator',
         availabilityArgs: { sourceLanguage: 'en', targetLanguage: 'fr' },
         createArgs: { sourceLanguage: 'en', targetLanguage: 'fr' },
-        monitorDownload: true
+        monitorDownload: true,
       }),
-      checkSingleApi({ key: 'languageDetector', globalName: 'LanguageDetector', monitorDownload: true }),
-      checkSingleApi({ key: 'prompt', globalName: 'LanguageModel', monitorDownload: true })
+      checkSingleApi({
+        key: 'languageDetector',
+        globalName: 'LanguageDetector',
+        monitorDownload: true,
+      }),
+      checkSingleApi({ key: 'prompt', globalName: 'LanguageModel', monitorDownload: true }),
+      checkSingleApi({ key: 'proofreader', globalName: 'Proofreader', monitorDownload: true }),
     ])
     error.value = ''
   } catch (err) {
@@ -163,11 +207,7 @@ async function checkApiStatus() {
   }
 }
 
-const unsupportedApis = computed(() =>
-  apiList.filter(api => !apiStatus.value[api.key].supported)
-)
+const unsupportedApis = computed(() => apiList.filter((api) => !apiStatus.value[api.key].supported))
 
-const showEnableFlagsInstruction = computed(() =>
-  unsupportedApis.value.length > 0
-)
+const showEnableFlagsInstruction = computed(() => unsupportedApis.value.length > 0)
 </script>

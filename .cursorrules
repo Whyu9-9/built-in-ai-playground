@@ -1,0 +1,142 @@
+---
+description: Coding rules for a Nuxt 3, Tiptap, and Supabase application with Gemini AI integration, focusing on JavaScript and flexible deployment strategies.
+alwaysApply: false
+---
+
+# Project Setup and Core Technologies
+
+## Nuxt 3 Application Guidelines
+
+- Always initialize Nuxt 3 projects using `npm create nuxt@latest <project-name>`.
+- Ensure `nuxt.config.js` is used for configuration, adhering strictly to a JavaScript-focused approach.
+- For server-side rendering (SSR) deployments (e.g., Google Cloud Run), `ssr: true` should be maintained in `nuxt.config.js` (this is the default setting).
+
+## Nuxt UI Integration
+
+- Install Nuxt UI version **3.2.1** using `npm install @nuxt/ui@3.2.1`.
+- Add `@nuxt/ui` to the `modules` array in `nuxt.config.js`.
+- Import Nuxt UI's CSS (which includes Tailwind CSS) in your main CSS file, typically `app/assets/css/main.css`.
+- Wrap the entire application with the `<UApp>` component in `app.vue` to enable global UI features like Toast and Tooltip components.
+- **Customize Nuxt UI themes and components to match the current project design.** Use `app.config.js` as needed to align with your existing style and branding.
+
+## Tiptap Editor Implementation
+
+- Integrate the Tiptap editor using the `nuxt-tiptap-editor` module: `npm install nuxt-tiptap-editor`.
+- Add `nuxt-tiptap-editor` to the `modules` array in `nuxt.config.js`.
+- Utilize the `useEditor` composable to initialize the editor with desired content and extensions (e.g., `TiptapStarterKit` for basic formatting).
+- Ensure proper editor lifecycle management by destroying the editor instance using `onBeforeUnmount` to prevent memory leaks.
+- Integrate editor controls (e.g., bold, italic buttons) using Nuxt UI components for a cohesive user experience.
+
+# Supabase Backend Infrastructure
+
+## Supabase Project and Nuxt Module Setup
+
+- Create a Supabase project via the dashboard and retrieve your `SUPABASE_URL` and `SUPABASE_KEY` (anon public key).
+- Store `SUPABASE_URL` and `SUPABASE_KEY` in a `.env` file at the project root for local development.
+- Install the `@nuxtjs/supabase` module: `npm install @nuxtjs/supabase`.
+- Add `@nuxtjs/supabase` to the `modules` array in `nuxt.config.js`.
+- Configure the Supabase module with `useSsrCookies: true` for proper session management in SSR and `redirect: true` for handling authentication flow redirects.
+
+## Database Management and Security
+
+- Interact with the Supabase database using the `useSupabaseClient()` composable for CRUD operations.
+- Define database schemas (e.g., `tasks` table with `id`, `title`, `is_done`, `created_at`) directly within the Supabase dashboard.
+- **Crucially, enable and define Row Level Security (RLS) policies for all database tables** to ensure granular control over data access and prevent unauthorized operations.
+
+## User Authentication and Authorization
+
+- Implement user authentication flows (login, registration, logout) using `useSupabaseAuthClient()` for methods like `signInWithPassword`, `signUp`, and `signOut`.
+- Access the current user's session and data using `useSupabaseUser()`.
+- Protect specific pages or routes that require user authentication by employing Nuxt route middleware (e.g., `middleware/auth.js`).
+
+## File Storage and Management
+
+- Create dedicated storage buckets within the Supabase project dashboard for managing assets.
+- Implement RLS policies for storage buckets to control who can upload, download, or view files.
+- Use `supabase.storage.from('bucketName').upload(filePath, file)` for uploading files, ensuring unique file paths (e.g., with timestamps or UUIDs).
+- Retrieve public URLs of uploaded files using `supabase.storage.from('bucketName').getPublicUrl(filePath)`.
+- Download files from private buckets using `supabase.storage.from('bucketName').download(filePath)`.
+
+## Realtime Data Synchronization
+
+- Enable Realtime for the desired database tables within the Supabase dashboard.
+- Subscribe to real-time changes on specific tables using `supabase.channel('channelName').on('postgres_changes', {... }, (payload) => {... }).subscribe()`.
+- Manage Realtime subscriptions within Vue's lifecycle hooks: initiate in `onMounted` and unsubscribe in `onUnmounted` to prevent memory leaks.
+
+# AI Integration: Leveraging Google Gemini with `@google/genai`
+
+## Setting Up `@google/genai`
+
+- Install the Google Gemini JavaScript SDK: `npm install @google/genai`.
+- **Critical Security Rule: The `GEMINI_API_KEY` must never be exposed in client-side code.** All calls to the Gemini API must originate from a secure server-side environment.
+
+## Securely Calling Gemini API (Server-Side Emphasis)
+
+- Store the `GEMINI_API_KEY` as an environment variable (e.g., `NUXT_GEMINI_API_KEY`) in your `.env` file for development.
+- For Nuxt Server Routes, access the private API key securely using `useRuntimeConfig(event)` within files in the `server/api/` directory.
+- For Supabase Edge Functions, access the environment variable directly using `Deno.env.get('GEMINI_API_KEY')`.
+
+# Architectural Flexibility and Deployment Strategies
+
+## Conditional Backend Logic for AI Calls
+
+- Implement a public runtime configuration variable (e.g., `NUXT_PUBLIC_USE_EDGE_FUNCTIONS_FOR_AI`) in `nuxt.config.js` to dynamically control whether AI calls use Supabase Edge Functions or Nuxt Server Routes.
+- Create an abstraction layer, such as a custom composable (`composables/useGeminiAI.js`), that encapsulates the logic for calling the Gemini API. This composable should check the `useEdgeFunctionsForAI` flag and conditionally invoke either the Supabase Edge Function (`supabase.functions.invoke('gemini-ai', { body: { prompt: prompt } })`) or the Nuxt Server Route (`$fetch('/api/generate-content', { method: 'POST', body: { prompt: prompt } })`).
+
+## Nuxt 3 Server Routes (Nitro)
+
+- Place all server-side API endpoints within the `/server/api` directory.
+- Define API logic using `defineEventHandler` and access request bodies with `readBody(event)`.
+
+## Supabase Edge Functions
+
+- Develop Edge Functions in TypeScript (running on the Deno runtime) within the `supabase/functions/` directory.
+- Edge Functions should be invoked from the Nuxt application using the Supabase client's `supabase.functions.invoke()` method.
+
+## Deployment Strategies
+
+- **Deploy to GitHub Pages (for Static Sites with Edge Functions):**
+  - Set `ssr: false` in `nuxt.config.js` to disable server-side rendering and enable static site generation.
+  - Configure the Nitro preset for `github_pages` in `nuxt.config.js`.
+  - Use `nuxi generate` as the build command.
+  - If not using a custom domain, set the `NUXT_APP_BASE_URL` environment variable to your repository slug (e.g., `NUXT_APP_BASE_URL=/<repository>/`).
+  - Ensure a `.nojekyll` file is present in the static output directory (`.output/public`) to prevent Jekyll processing.
+  - Automate deployment using a GitHub Actions workflow.
+- **Deploy to Google Cloud Run (for Server-Side APIs):**
+  - Maintain `ssr: true` (the default) in `nuxt.config.js` to enable server-side rendering.
+  - When deploying to Cloud Run, use a `cloudbuild.yaml` file in the project root to define the build and deployment steps. This file should typically include:
+    - Steps to install Node.js dependencies (e.g., `npm install`).
+    - A step to build the Nuxt application (e.g., `npm run build`).
+    - Steps to build a Docker image for the Nuxt application.
+    - Steps to push the Docker image to Google Artifact Registry.
+    - A step to deploy the image to Cloud Run using `gcloud run deploy`.
+  - Cloud Build triggers can be configured to automate continuous deployment upon code pushes.
+  - **Crucially, set all necessary environment variables (including API keys and configuration toggles) directly within the Google Cloud Run service configuration interface, as `.env` files are not read in production environments.**
+
+## Environment Variable Management
+
+- Use Nuxt's `runtimeConfig` in `nuxt.config.js` to define configuration variables, distinguishing between `private` (server-only) and `public` (client-exposed) sections.
+- To override `runtimeConfig` values at runtime, environment variables must be prefixed with `NUXT_` for private variables (e.g., `NUXT_GEMINI_API_KEY`) or `NUXT_PUBLIC_` for public variables (e.g., `NUXT_PUBLIC_USE_EDGE_FUNCTIONS_FOR_AI`).
+- Remember that `.env` files are for local development only; production environment variables must be explicitly set in the hosting provider's interface.
+
+# General Best Practices
+
+## Security
+
+- Always store sensitive API keys (like the Gemini API key) as environment variables and access them exclusively on the server-side. Never hardcode or expose them client-side.
+- Rigorously implement and test Supabase Row Level Security (RLS) for all database tables and storage buckets to ensure fine-grained data access control.
+- Utilize Nuxt route middleware for authentication and authorization to protect sensitive pages and API routes on both the client and server.
+
+## Code Organization and Maintainability
+
+- Adhere to Nuxt's recommended directory structure (`pages`, `components`, `composables`, `server`, `plugins`, `middleware`) for logical separation of concerns.
+- Only create composables when the logic needs to be reused across multiple components or parts of the application. If logic is not reused, avoid creating a composable to prevent unnecessary complexity.
+- Encapsulate reusable logic, such as the AI call abstraction (`useGeminiAI.js`), within custom composables to promote reusability and reduce code duplication.
+- Maintain consistent styling throughout the application by exclusively using Nuxt UI components and Tailwind CSS utility classes.
+- For more complex data interactions, consider adopting a service layer or repository pattern to abstract data fetching logic and enhance modularity.
+
+## Documentation Adherence
+
+- Always follow the official documentation for `@google/genai` at `https://ai.google.dev/gemini-api/docs/libraries`.
+- Always follow the official documentation for Nuxt UI at `https://ui.nuxt.com/`.
+- Always follow the official documentation for `$fetch` at `https://nuxt.com/docs/api/utils/dollarfetch`.

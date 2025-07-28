@@ -70,4 +70,16 @@ export const apiDocs = {
       },
     ],
   },
+
+  proofreader: {
+    description:
+      'The Proofreader API provides real-time grammar, spelling, and punctuation correction directly in the browser.',
+    links: [
+      {
+        text: 'Explainer',
+        url: 'https://github.com/explainers-by-googlers/writing-assistance-apis',
+        icon: 'i-heroicons-document-text',
+      },
+    ],
+  },
 }
