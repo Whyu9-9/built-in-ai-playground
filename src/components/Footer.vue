@@ -3,7 +3,7 @@
         <div class="max-w-5xl mx-auto px-8 py-6">
             <div class="text-center space-y-2">
                 <div class="text-sm" style="color: var(--ui-text-muted)">
-                    Improved with
+                    Improved and Modified with
                     <a href="https://cursor.sh" target="_blank" rel="noopener"
                         class="hover:underline font-medium">Cursor AI</a>,
                     Forked from

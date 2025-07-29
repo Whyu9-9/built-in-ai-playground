@@ -1,0 +1,6 @@
+name = "built-in-ai-playground"
+compatibility_date = "2025-07-28"
+
+[site]
+bucket = "./dist"
+entry-point = "workers-site"

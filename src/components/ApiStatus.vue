@@ -17,6 +17,10 @@
         <UIcon name="i-heroicons-play" />
         Check API Support
       </UButton>
+      <UButton v-else @click="onCheckSupport" size="lg">
+        <UIcon name="i-heroicons-arrow-path" />
+        Refresh Status
+      </UButton>
     </div>
 
     <!-- API Status Grid -->

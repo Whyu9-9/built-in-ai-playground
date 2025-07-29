@@ -33,23 +33,35 @@ onMounted(() => {
 
         <!-- Navigation -->
         <div class="p-4 space-y-2">
-          <router-link
-            to="/"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
-            style="color: var(--ui-text-muted)"
-            active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
-            <UIcon name="i-heroicons-home" class="text-lg" />
-            Home
-          </router-link>
+          <div class="pt-4">
+            <div
+              class="px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center gap-2"
+              style="color: var(--ui-text-muted)"
+            >
+              <UIcon name="i-heroicons-squares-2x2" class="text-lg" />
+              General
+            </div>
+            <div class="mt-2 space-y-1 ml-3">
+              <router-link
+                to="/"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg font-medium transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
+                style="color: var(--ui-text-muted)"
+                active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800">
+                <UIcon name="i-heroicons-home" class="text-lg" />
+                Home
+              </router-link>
+            </div>
+          </div>
 
           <div class="pt-4">
             <div
-              class="px-3 py-2 text-xs font-semibold uppercase tracking-wider"
+              class="px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center gap-2"
               style="color: var(--ui-text-muted)"
             >
+            <UIcon name="i-heroicons-arrow-up-circle" class="text-lg" />
               High-Level APIs
             </div>
-            <div class="mt-2 space-y-1">
+            <div class="mt-2 space-y-1 ml-3">
               <router-link
                 to="/summarizer"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
@@ -96,7 +108,7 @@ onMounted(() => {
                 style="color: var(--ui-text-muted)"
                 active-class="!bg-primary-50 dark:!bg-primary-950 !text-primary-600 dark:!text-primary-400 !border !border-primary-200 dark:!border-primary-800"
               >
-                <div class="i-heroicons-pencil-square text-lg" />
+                <UIcon name="i-heroicons-pencil-square" class="text-lg" />
                 Proofreader
               </router-link>
             </div>
@@ -104,12 +116,13 @@ onMounted(() => {
 
           <div class="pt-4">
             <div
-              class="px-3 py-2 text-xs font-semibold uppercase tracking-wider"
+              class="px-3 py-2 text-xs font-semibold uppercase tracking-wider flex items-center gap-2"
               style="color: var(--ui-text-muted)"
             >
+              <UIcon name="i-heroicons-cpu-chip" class="text-lg" />
               Prompt APIs
             </div>
-            <div class="mt-2 space-y-1">
+            <div class="mt-2 space-y-1 ml-3">
               <router-link
                 to="/prompt"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors hover:bg-gray-100/50 dark:hover:bg-gray-800/50"
