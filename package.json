@@ -8,8 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "format": "prettier --write src/",
-    "deploy": "npm run build && wrangler deploy",
-    "publish": "npm run build && wrangler publish"
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@nuxt/ui": "^3.1.3",
