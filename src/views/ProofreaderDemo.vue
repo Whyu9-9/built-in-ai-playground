@@ -7,10 +7,7 @@
             <div class="i-heroicons-code-bracket-20-solid text-lg" />
             <h3 class="text-lg font-semibold">Proofreader API</h3>
           </div>
-          <UButton
-            @click="() => (toggleCodeCollapse = !toggleCodeCollapse)"
-            icon="i-heroicons-code-bracket-20-solid"
-          >
+          <UButton @click="() => (toggleCodeCollapse = !toggleCodeCollapse)" icon="i-heroicons-code-bracket-20-solid">
             {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
           </UButton>
         </div>
@@ -21,24 +18,16 @@
           <CodeExample :code="exampleCode" />
         </div>
 
-        <UAlert
-          v-if="downloadStatus"
-          :color="downloadProgress === 100 ? 'primary' : 'secondary'"
-          variant="subtle"
-          :description="downloadStatus"
-        />
+        <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
+          :description="downloadStatus" />
 
         <div class="space-y-4">
           <div class="flex items-center gap-2">
             <h3 class="font-medium">Input Text</h3>
           </div>
-          <UTextarea
-            v-model="inputText"
+          <UTextarea v-model="inputText"
             placeholder="Enter text to proofread (e.g., 'I seen him yesterday at the store, and he bought two loafs of bread.')"
-            :rows="4"
-            :disabled="!isSupported"
-            class="w-full"
-          />
+            :rows="4" :disabled="!isSupported" class="w-full" />
         </div>
 
         <div class="space-y-4">
@@ -61,24 +50,16 @@
           <div class="flex items-center gap-2">
             <h3 class="font-medium">Explanation Language</h3>
           </div>
-          <USelect
-            v-model="correctionExplanationLanguage"
-            :items="explanationLanguageOptions"
-            :disabled="!isSupported"
-          />
+          <USelect v-model="correctionExplanationLanguage" :items="explanationLanguageOptions"
+            :disabled="!isSupported" />
         </div>
 
         <div class="space-y-4">
           <div class="flex items-center gap-2">
             <h3 class="font-medium">Expected Input Languages</h3>
           </div>
-          <USelectMenu
-            v-model="expectedInputLanguages"
-            :options="inputLanguageOptions"
-            multiple
-            :disabled="!isSupported"
-            placeholder="Select expected input languages"
-          />
+          <USelectMenu v-model="expectedInputLanguages" :options="inputLanguageOptions" multiple
+            :disabled="!isSupported" placeholder="Select expected input languages" />
         </div>
 
         <div class="space-y-4">
@@ -86,13 +67,8 @@
         </div>
 
         <div class="flex gap-2">
-          <UButton
-            @click="proofreadText"
-            :loading="isProcessing"
-            :disabled="!isSupported || !canProcess"
-            color="primary"
-            size="md"
-          >
+          <UButton @click="proofreadText" :loading="isProcessing" :disabled="!isSupported || !canProcess"
+            color="primary" size="md">
             Proofread Text
           </UButton>
           <UButton v-if="isProcessing" @click="cancelProofreading" color="secondary" size="md">
@@ -104,14 +80,7 @@
           <UAlert color="error" variant="subtle" :title="error" />
         </div>
 
-        <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h3 class="text-gray-500 mb-2">Proofreading Results</h3>
-
-          <!-- Corrected Text -->
-          <div class="mb-4">
-            {{ result.correctedInput }}
-          </div>
-        </div>
+        <ResultDisplay :result="result?.correctedInput" title="Proofreading Results" ref="resultDisplay" />
       </div>
     </UCard>
   </div>
@@ -123,6 +92,7 @@ import CodeExample from '../components/CodeExample.vue'
 import StreamingToggle from '../components/StreamingToggle.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
 import { apiDocs } from '../data/apiDocs.js'
+import ResultDisplay from '../components/ResultDisplay.vue'
 
 const inputText = ref('I seen him yesterday atss the store, and he bought twa loafs of bread.')
 const includeCorrectionTypes = ref(true)
