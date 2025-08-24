@@ -7,7 +7,10 @@
             <div class="i-heroicons-code-bracket-20-solid text-lg" />
             <h3 class="text-lg font-semibold">Summarizer API</h3>
           </div>
-          <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse" icon="i-heroicons-code-bracket-20-solid">
+          <UButton
+            @click="() => (toggleCodeCollapse = !toggleCodeCollapse)"
+            icon="i-heroicons-code-bracket-20-solid"
+          >
             {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
           </UButton>
         </div>
@@ -17,28 +20,40 @@
         <ApiExplainer :apiData="apiDocs.summarizer" />
         <div class="space-y-4" v-if="toggleCodeCollapse">
           <CodeExample :code="exampleCode" />
-
         </div>
 
-        <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
-          :description="downloadStatus" />
+        <UAlert
+          v-if="downloadStatus"
+          :color="downloadProgress === 100 ? 'primary' : 'secondary'"
+          variant="subtle"
+          :description="downloadStatus"
+        />
 
         <div class="space-y-6">
           <div class="space-y-4">
             <div class="flex items-center gap-2">
               <h3 class="font-medium">Input Text</h3>
             </div>
-            <UTextarea v-model="inputText" placeholder="Enter your text here..." :rows="6" :disabled="!isSupported"
-              class="w-full font-mono text-sm" />
+            <UTextarea
+              v-model="inputText"
+              placeholder="Enter your text here..."
+              :rows="6"
+              :disabled="!isSupported"
+              class="w-full font-mono text-sm"
+            />
           </div>
 
           <div class="space-y-4">
             <div class="flex items-center gap-2">
               <h3 class="font-medium">Shared Context (Optional)</h3>
             </div>
-            <UTextarea v-model="sharedContext"
+            <UTextarea
+              v-model="sharedContext"
               placeholder="Add any context that might help improve the summarization (e.g., 'This is a scientific article')"
-              :rows="2" :disabled="!isSupported" class="w-full" />
+              :rows="2"
+              :disabled="!isSupported"
+              class="w-full"
+            />
           </div>
 
           <div class="grid grid-cols-3 gap-4">
@@ -69,8 +84,13 @@
           </div>
 
           <div class="flex gap-2">
-            <UButton @click="summarizeText" :loading="isProcessing" :disabled="!isSupported || !canProcess"
-              color="primary" size="md">
+            <UButton
+              @click="summarizeText"
+              :loading="isProcessing"
+              :disabled="!isSupported || !canProcess"
+              color="primary"
+              size="md"
+            >
               Summarize Text
             </UButton>
           </div>
@@ -112,21 +132,57 @@ const sharedContext = ref('')
 const enableStreaming = ref(false)
 
 const summaryTypes = [
-  { label: 'Key Points', value: 'key-points', description: 'Extract important points as bullet points (3-7 points based on length)' },
-  { label: 'TL;DR', value: 'tldr', description: 'Quick overview summary (1-5 sentences based on length)' },
-  { label: 'Teaser', value: 'teaser', description: 'Intriguing summary to draw readers in (1-5 sentences based on length)' },
-  { label: 'Headline', value: 'headline', description: 'Main point in a single sentence (12-22 words based on length)' }
+  {
+    label: 'Key Points',
+    value: 'key-points',
+    description: 'Extract important points as bullet points (3-7 points based on length)',
+  },
+  {
+    label: 'TL;DR',
+    value: 'tldr',
+    description: 'Quick overview summary (1-5 sentences based on length)',
+  },
+  {
+    label: 'Teaser',
+    value: 'teaser',
+    description: 'Intriguing summary to draw readers in (1-5 sentences based on length)',
+  },
+  {
+    label: 'Headline',
+    value: 'headline',
+    description: 'Main point in a single sentence (12-22 words based on length)',
+  },
+  {
+    label: 'Executive Summary',
+    value: 'executive',
+    description: 'Business-focused summary with key insights and recommendations',
+  },
+  {
+    label: 'Academic Abstract',
+    value: 'academic',
+    description: 'Scholarly summary with methodology and findings',
+  },
+  {
+    label: 'News Summary',
+    value: 'news',
+    description: 'Journalistic summary with who, what, when, where, why',
+  },
+  {
+    label: 'Technical Summary',
+    value: 'technical',
+    description: 'Technical overview with key concepts and implementation details',
+  },
 ]
 
 const formatOptions = [
   { label: 'Markdown', value: 'markdown', description: 'Formatted markdown text' },
-  { label: 'Plain Text', value: 'plain-text', description: 'Standard unformatted text' }
+  { label: 'Plain Text', value: 'plain-text', description: 'Standard unformatted text' },
 ]
 
 const lengthOptions = [
   { label: 'Short', value: 'short', description: 'Concise summary' },
   { label: 'Medium', value: 'medium', description: 'Balanced length (default)' },
-  { label: 'Long', value: 'long', description: 'Detailed summary' }
+  { label: 'Long', value: 'long', description: 'Detailed summary' },
 ]
 
 const canProcess = computed(() => {
@@ -140,7 +196,7 @@ const formattedResult = computed(() => {
     // Convert bullet points to HTML list if in markdown format
     return result.value
       .split('\n')
-      .map(point => `<li>${point.replace(/^[•\-\*]\s*/, '')}</li>`)
+      .map((point) => `<li>${point.replace(/^[•\-\*]\s*/, '')}</li>`)
       .join('\n')
   }
 
@@ -165,8 +221,8 @@ const generateExampleCode = computed(() => {
 
   const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
 
-  const summarizeCode = enableStreaming.value ?
-    `// Use streaming API for real-time updates
+  const summarizeCode = enableStreaming.value
+    ? `// Use streaming API for real-time updates
 const stream = await summarizer.summarizeStreaming(
   ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}\
 ${optionsStr}
@@ -175,8 +231,8 @@ ${optionsStr}
 let result = ''
 for await (const chunk of stream) {
   result += chunk
-}` :
-    `// Use regular API for complete response
+}`
+    : `// Use regular API for complete response
 const result = await summarizer.summarize(
   ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}\
 ${optionsStr}
@@ -246,12 +302,31 @@ async function checkSupport() {
     }
   } catch (err) {
     console.error('Failed to check availability:', err)
-    error.value = err.message
+    // Handle potential adversarial inputs or unexpected errors
+    if (err.message && err.message.includes('adversarial')) {
+      error.value = 'Input appears to be adversarial. Please try with different content.'
+    } else {
+      error.value = err.message || 'Failed to check Summarizer API availability'
+    }
+    isSupported.value = false
   }
 }
 
 async function summarizeText() {
   if (!isSupported.value || !inputText.value.trim()) return
+
+  // Basic input validation to detect potential adversarial content
+  const inputLength = inputText.value.length
+  if (inputLength > 10000) {
+    error.value = 'Input text is too long. Please limit to 10,000 characters or less.'
+    return
+  }
+
+  if (inputLength < 10) {
+    error.value =
+      'Input text is too short. Please provide at least 10 characters for meaningful summarization.'
+    return
+  }
 
   isProcessing.value = true
   error.value = ''
@@ -276,7 +351,7 @@ async function summarizeText() {
           downloadProgress.value = e.loaded * 100
           downloadStatus.value = 'Downloading model...'
         })
-      }
+      },
     }
 
     if (availability !== 'available') {
@@ -301,6 +376,12 @@ async function summarizeText() {
   } catch (err) {
     if (err.name === 'AbortError') {
       error.value = 'Operation cancelled'
+    } else if (err.message && err.message.includes('adversarial')) {
+      error.value = 'Input appears to be adversarial. Please try with different content.'
+    } else if (err.message && err.message.includes('inappropriate')) {
+      error.value = 'Content appears to be inappropriate for summarization.'
+    } else if (err.message && err.message.includes('unsupported')) {
+      error.value = 'This type of content is not supported for summarization.'
     } else {
       error.value = err.message || 'Failed to generate summary'
       console.error('Summarization error:', err)

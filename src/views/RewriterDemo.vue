@@ -1,14 +1,16 @@
 <template>
   <div class="space-y-8">
-
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <div class="i-heroicons-code-bracket-20-solid text-lg" />
+            <div class="i-heroicons-arrow-path-20-solid text-lg" />
             <h3 class="text-lg font-semibold">Rewriter API</h3>
           </div>
-          <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse" icon="i-heroicons-code-bracket-20-solid">
+          <UButton
+            @click="() => (toggleCodeCollapse = !toggleCodeCollapse)"
+            icon="i-heroicons-code-bracket-20-solid"
+          >
             {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
           </UButton>
         </div>
@@ -18,49 +20,99 @@
         <ApiExplainer :apiData="apiDocs.rewriter" />
         <div class="space-y-4" v-if="toggleCodeCollapse">
           <CodeExample :code="exampleCode" />
-
         </div>
 
-        <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
-          :description="downloadStatus" />
+        <UAlert
+          v-if="downloadStatus"
+          :color="downloadProgress === 100 ? 'primary' : 'secondary'"
+          variant="subtle"
+          :description="downloadStatus"
+        />
 
         <div class="space-y-6">
           <div class="space-y-4">
             <div class="flex items-center gap-2">
               <h3 class="font-medium">Input Text</h3>
             </div>
-            <UTextarea v-model="inputText" placeholder="Enter text to rewrite..." :rows="4" :disabled="!isSupported"
-              class="w-full" />
+            <UTextarea
+              v-model="inputText"
+              placeholder="Enter the text you want to rewrite..."
+              :rows="6"
+              :disabled="!isSupported"
+              class="w-full font-mono text-sm"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Transformation Type</h3>
+              </div>
+              <USelect
+                v-model="transformationType"
+                :items="transformationOptions"
+                :disabled="!isSupported"
+              />
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Output Format</h3>
+              </div>
+              <USelect v-model="outputFormat" :items="formatOptions" :disabled="!isSupported" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Length</h3>
+              </div>
+              <USelect v-model="contentLength" :items="lengthOptions" :disabled="!isSupported" />
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Style</h3>
+              </div>
+              <USelect v-model="writingStyle" :items="styleOptions" :disabled="!isSupported" />
+            </div>
           </div>
 
           <div class="space-y-4">
             <div class="flex items-center gap-2">
-              <h3 class="font-medium">Shared Context (Optional)</h3>
+              <h3 class="font-medium">Additional Instructions (Optional)</h3>
             </div>
-            <UTextarea v-model="sharedContext"
-              placeholder="Add context to help the rewriter understand the content better..." :rows="2"
-              :disabled="!isSupported" class="w-full" />
+            <UTextarea
+              v-model="additionalInstructions"
+              placeholder="Add any specific instructions for the rewriting process"
+              :rows="2"
+              :disabled="!isSupported"
+              class="w-full"
+            />
           </div>
 
           <div class="space-y-4">
-            <div class="flex items-center gap-2">
-              <h3 class="font-medium">Rewriting Options</h3>
-            </div>
-            <div class="grid grid-cols-3 gap-4">
-              <USelect v-model="rewriteLength" :items="lengthOptions" :disabled="!isSupported" />
-              <USelect v-model="rewriteTone" :items="toneOptions" :disabled="!isSupported" />
-              <USelect v-model="rewriteFormat" :items="formatOptions" :disabled="!isSupported" />
-            </div>
+            <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
           </div>
-
-          <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
 
           <div class="flex gap-2">
-            <UButton @click="rewriteText" :loading="isProcessing" :disabled="!isSupported || !canProcess"
-              color="primary" size="md">
+            <UButton
+              @click="rewriteText"
+              :loading="isProcessing"
+              :disabled="!isSupported || !canProcess"
+              color="primary"
+              size="md"
+            >
               Rewrite Text
             </UButton>
-            <UButton v-if="isProcessing" @click="cancelRewrite" color="error" variant="soft" size="md">
+            <UButton
+              v-if="isProcessing"
+              @click="cancelRewriting"
+              color="error"
+              variant="soft"
+              size="md"
+            >
               Cancel
             </UButton>
           </div>
@@ -71,7 +123,7 @@
 
           <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
             <h3 class="text-gray-500 mb-2">Rewritten Text</h3>
-            <div class="whitespace-pre-wrap">{{ result }}</div>
+            <div class="whitespace-pre-wrap" v-html="formattedResult"></div>
           </div>
         </div>
       </div>
@@ -87,10 +139,6 @@ import ApiExplainer from '../components/ApiExplainer.vue'
 import { apiDocs } from '../data/apiDocs.js'
 
 const inputText = ref('')
-const sharedContext = ref('')
-const rewriteLength = ref('as-is')
-const rewriteTone = ref('as-is')
-const rewriteFormat = ref('as-is')
 const result = ref('')
 const isProcessing = ref(false)
 const isSupported = ref(false)
@@ -100,61 +148,127 @@ const downloadProgress = ref(0)
 const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
 const enableStreaming = ref(false)
+const transformationType = ref('more-formal')
+const outputFormat = ref('markdown')
+const contentLength = ref('medium')
+const writingStyle = ref('professional')
+const additionalInstructions = ref('')
 
-const lengthOptions = [
-  { label: 'Same Length', value: 'as-is', description: 'Keep the same length' },
-  { label: 'Shorter', value: 'shorter', description: 'Make it more concise' },
-  { label: 'Longer', value: 'longer', description: 'Add more details' }
-]
-
-const toneOptions = [
-  { label: 'Same Tone', value: 'as-is', description: 'Keep the same tone' },
-  { label: 'More Formal', value: 'more-formal', description: 'Make it more professional' },
-  { label: 'More Casual', value: 'more-casual', description: 'Make it more conversational' }
+const transformationOptions = [
+  {
+    label: 'More Formal',
+    value: 'more-formal',
+    description: 'Make the text more formal and professional',
+  },
+  {
+    label: 'More Casual',
+    value: 'more-casual',
+    description: 'Make the text more casual and conversational',
+  },
+  {
+    label: 'More Creative',
+    value: 'more-creative',
+    description: 'Make the text more imaginative and engaging',
+  },
+  {
+    label: 'More Concise',
+    value: 'more-concise',
+    description: 'Make the text shorter while preserving meaning',
+  },
+  {
+    label: 'Longer',
+    value: 'longer',
+    description: 'Expand the text with more detail and explanation',
+  },
+  { label: 'Simpler', value: 'simpler', description: 'Use simpler language and shorter sentences' },
+  {
+    label: 'More Technical',
+    value: 'more-technical',
+    description: 'Use more technical and precise language',
+  },
+  {
+    label: 'More Accessible',
+    value: 'more-accessible',
+    description: 'Make the text easier to understand',
+  },
 ]
 
 const formatOptions = [
-  { label: 'Same Format', value: 'as-is', description: 'Keep the same format' },
-  { label: 'Plain Text', value: 'plain-text', description: 'Convert to plain text' },
-  { label: 'Markdown', value: 'markdown', description: 'Convert to markdown format' }
+  { label: 'Markdown', value: 'markdown', description: 'Formatted markdown text' },
+  { label: 'Plain Text', value: 'plain-text', description: 'Standard unformatted text' },
+]
+
+const lengthOptions = [
+  { label: 'Short', value: 'short', description: 'Concise version (preserve key points)' },
+  { label: 'Medium', value: 'medium', description: 'Balanced length (similar to original)' },
+  { label: 'Long', value: 'long', description: 'Expanded version (add detail)' },
+]
+
+const styleOptions = [
+  { label: 'Professional', value: 'professional', description: 'Formal, business-like tone' },
+  { label: 'Casual', value: 'casual', description: 'Informal, conversational tone' },
+  { label: 'Creative', value: 'creative', description: 'Imaginative, engaging tone' },
+  { label: 'Academic', value: 'academic', description: 'Scholarly, research-based tone' },
+  { label: 'Technical', value: 'technical', description: 'Precise, technical language' },
 ]
 
 const canProcess = computed(() => {
   return inputText.value.trim() !== ''
 })
 
+const formattedResult = computed(() => {
+  if (!result.value) return ''
+
+  if (outputFormat.value === 'markdown') {
+    // Convert markdown to HTML for display
+    return result.value
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/^\- (.*$)/gim, '<li>$1</li>')
+      .replace(/\n\n/g, '<br><br>')
+  }
+
+  return result.value
+})
+
 const generateExampleCode = computed(() => {
   const options = []
 
-  if (rewriteLength.value !== 'as-is') {
-    options.push(`length: '${rewriteLength.value}'`)
+  if (transformationType.value !== 'more-formal') {
+    options.push(`type: '${transformationType.value}'`)
   }
-  if (rewriteTone.value !== 'as-is') {
-    options.push(`tone: '${rewriteTone.value}'`)
+  if (outputFormat.value !== 'markdown') {
+    options.push(`format: '${outputFormat.value}'`)
   }
-  if (rewriteFormat.value !== 'as-is') {
-    options.push(`format: '${rewriteFormat.value}'`)
+  if (contentLength.value !== 'medium') {
+    options.push(`length: '${contentLength.value}'`)
   }
-  if (sharedContext.value) {
-    options.push(`sharedContext: '${sharedContext.value.replace(/'/g, "\\'")}'`)
+  if (writingStyle.value !== 'professional') {
+    options.push(`style: '${writingStyle.value}'`)
+  }
+  if (additionalInstructions.value) {
+    options.push(`instructions: '${additionalInstructions.value.replace(/'/g, "\\'")}'`)
   }
 
   const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
 
-  const rewriteCode = enableStreaming.value ?
-    `// Use streaming API for real-time updates
+  const rewriteCode = enableStreaming.value
+    ? `// Use streaming API for real-time updates
 const stream = await rewriter.rewriteStreaming(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}\
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to rewrite'"}\
 ${optionsStr}
 )
 
 let result = ''
 for await (const chunk of stream) {
   result += chunk
-}` :
-    `// Use regular API for complete response
+}`
+    : `// Use regular API for complete response
 const result = await rewriter.rewrite(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}\
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to rewrite'"}\
 ${optionsStr}
 )`
 
@@ -225,7 +339,7 @@ async function checkSupport() {
   }
 }
 
-function cancelRewrite() {
+function cancelRewriting() {
   if (abortController.value) {
     abortController.value.abort()
     abortController.value = null
@@ -248,17 +362,18 @@ async function rewriteText() {
     }
 
     const options = {
-      tone: rewriteTone.value,
-      format: rewriteFormat.value,
-      length: rewriteLength.value,
-      sharedContext: sharedContext.value || undefined,
+      type: transformationType.value,
+      format: outputFormat.value,
+      length: contentLength.value,
+      style: writingStyle.value,
+      instructions: additionalInstructions.value,
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
           downloadProgress.value = e.loaded * 100
           downloadStatus.value = 'Downloading model...'
         })
-      }
+      },
     }
 
     if (availability !== 'available') {
@@ -277,8 +392,8 @@ async function rewriteText() {
       }
     } else {
       // Use regular API
-      const text = await rewriter.rewrite(inputText.value)
-      result.value = text
+      const rewritten = await rewriter.rewrite(inputText.value)
+      result.value = rewritten
     }
   } catch (err) {
     if (err.name === 'AbortError') {

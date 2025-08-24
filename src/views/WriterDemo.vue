@@ -1,64 +1,117 @@
 <template>
   <div class="space-y-8">
-
     <UCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <div class="i-heroicons-code-bracket-20-solid text-lg" />
+            <div class="i-heroicons-pencil-square-20-solid text-lg" />
             <h3 class="text-lg font-semibold">Writer API</h3>
           </div>
-          <UButton @click="() => toggleCodeCollapse = !toggleCodeCollapse" icon="i-heroicons-code-bracket-20-solid">
+          <UButton
+            @click="() => (toggleCodeCollapse = !toggleCodeCollapse)"
+            icon="i-heroicons-code-bracket-20-solid"
+          >
             {{ toggleCodeCollapse ? 'Hide code' : 'Show code' }}
           </UButton>
         </div>
       </template>
+
       <div class="space-y-4">
         <ApiExplainer :apiData="apiDocs.writer" />
         <div class="space-y-4" v-if="toggleCodeCollapse">
           <CodeExample :code="exampleCode" />
         </div>
 
-        <UAlert v-if="downloadStatus" :color="downloadProgress === 100 ? 'primary' : 'secondary'" variant="subtle"
-          :description="downloadStatus" />
+        <UAlert
+          v-if="downloadStatus"
+          :color="downloadProgress === 100 ? 'primary' : 'secondary'"
+          variant="subtle"
+          :description="downloadStatus"
+        />
 
-        <div class="space-y-4">
-          <div class="flex items-center gap-2">
-            <h3 class="font-medium">Writing Task</h3>
+        <div class="space-y-6">
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <h3 class="font-medium">Writing Task Prompt</h3>
+            </div>
+            <UTextarea
+              v-model="writingPrompt"
+              placeholder="Describe what you want to write (e.g., 'Write a blog post about AI', 'Create a product description')"
+              :rows="3"
+              :disabled="!isSupported"
+              class="w-full"
+            />
           </div>
-          <UTextarea v-model="writingTask"
-            placeholder="Describe your writing task (e.g., 'Write a product description for an eco-friendly water bottle')"
-            :rows="4" :disabled="!isSupported" class="w-full" />
-        </div>
 
-        <div class="space-y-4">
-          <div class="flex items-center gap-2">
-            <h3 class="font-medium">Writing Style</h3>
-          </div>
           <div class="grid grid-cols-2 gap-4">
-            <USelect v-model="writingTone" :items="toneOptions" :disabled="!isSupported" />
-            <USelect v-model="writingFormat" :items="formatOptions" :disabled="!isSupported" />
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Output Format</h3>
+              </div>
+              <USelect v-model="outputFormat" :items="formatOptions" :disabled="!isSupported" />
+            </div>
+
+            <div class="space-y-4">
+              <div class="flex items-center gap-2">
+                <h3 class="font-medium">Length</h3>
+              </div>
+              <USelect v-model="contentLength" :items="lengthOptions" :disabled="!isSupported" />
+            </div>
           </div>
-        </div>
 
-        <div class="space-y-4">
-          <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
-        </div>
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <h3 class="font-medium">Writing Style</h3>
+            </div>
+            <USelect v-model="writingStyle" :items="styleOptions" :disabled="!isSupported" />
+          </div>
 
-        <div class="flex gap-2">
-          <UButton @click="generateText" :loading="isProcessing" :disabled="!isSupported || !canProcess" color="primary"
-            size="md">
-            Generate Text
-          </UButton>
-        </div>
+          <div class="space-y-4">
+            <div class="flex items-center gap-2">
+              <h3 class="font-medium">Additional Context (Optional)</h3>
+            </div>
+            <UTextarea
+              v-model="additionalContext"
+              placeholder="Add any additional context, requirements, or specific instructions for the writing task"
+              :rows="2"
+              :disabled="!isSupported"
+              class="w-full"
+            />
+          </div>
 
-        <div v-if="error" class="mt-4">
-          <UAlert color="error" variant="subtle" :title="error" />
-        </div>
+          <div class="space-y-4">
+            <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
+          </div>
 
-        <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
-          <h3 class="text-gray-500 mb-2">Generated Text</h3>
-          <div class="whitespace-pre-wrap">{{ result }}</div>
+          <div class="flex gap-2">
+            <UButton
+              @click="generateContent"
+              :loading="isProcessing"
+              :disabled="!isSupported || !canProcess"
+              color="primary"
+              size="md"
+            >
+              Generate Content
+            </UButton>
+            <UButton
+              v-if="isProcessing"
+              @click="cancelGeneration"
+              color="error"
+              variant="soft"
+              size="md"
+            >
+              Cancel
+            </UButton>
+          </div>
+
+          <div v-if="error" class="mt-4">
+            <UAlert color="error" variant="subtle" :title="error" />
+          </div>
+
+          <div v-if="result" class="mt-4 p-4 bg-gray-50 rounded-lg">
+            <h3 class="text-gray-500 mb-2">Generated Content</h3>
+            <div class="whitespace-pre-wrap" v-html="formattedResult"></div>
+          </div>
         </div>
       </div>
     </UCard>
@@ -72,9 +125,7 @@ import StreamingToggle from '../components/StreamingToggle.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
 import { apiDocs } from '../data/apiDocs.js'
 
-const writingTask = ref('')
-const writingTone = ref('neutral')
-const writingFormat = ref('markdown')
+const writingPrompt = ref('')
 const result = ref('')
 const isProcessing = ref(false)
 const isSupported = ref(false)
@@ -84,48 +135,84 @@ const downloadProgress = ref(0)
 const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
 const enableStreaming = ref(false)
-
-const toneOptions = [
-  { label: 'Neutral', value: 'neutral', description: 'Balanced and objective tone' },
-  { label: 'Formal', value: 'formal', description: 'Business and professional style' },
-  { label: 'Casual', value: 'casual', description: 'Friendly and conversational' }
-]
+const outputFormat = ref('markdown')
+const contentLength = ref('medium')
+const writingStyle = ref('professional')
+const additionalContext = ref('')
 
 const formatOptions = [
   { label: 'Markdown', value: 'markdown', description: 'Formatted markdown text' },
   { label: 'Plain Text', value: 'plain-text', description: 'Standard unformatted text' },
 ]
 
+const lengthOptions = [
+  { label: 'Short', value: 'short', description: 'Concise content (1-2 paragraphs)' },
+  { label: 'Medium', value: 'medium', description: 'Balanced length (3-5 paragraphs)' },
+  { label: 'Long', value: 'long', description: 'Detailed content (6+ paragraphs)' },
+]
+
+const styleOptions = [
+  { label: 'Professional', value: 'professional', description: 'Formal, business-like tone' },
+  { label: 'Casual', value: 'casual', description: 'Informal, conversational tone' },
+  { label: 'Creative', value: 'creative', description: 'Imaginative, engaging tone' },
+  { label: 'Academic', value: 'academic', description: 'Scholarly, research-based tone' },
+  { label: 'Technical', value: 'technical', description: 'Precise, technical language' },
+]
+
 const canProcess = computed(() => {
-  return writingTask.value.trim() !== ''
+  return writingPrompt.value.trim() !== ''
+})
+
+const formattedResult = computed(() => {
+  if (!result.value) return ''
+
+  if (outputFormat.value === 'markdown') {
+    // Convert markdown to HTML for display
+    return result.value
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+      .replace(/^\- (.*$)/gim, '<li>$1</li>')
+      .replace(/\n\n/g, '<br><br>')
+  }
+
+  return result.value
 })
 
 const generateExampleCode = computed(() => {
   const options = []
 
-  if (writingTone.value !== 'neutral') {
-    options.push(`tone: '${writingTone.value}'`)
+  if (outputFormat.value !== 'markdown') {
+    options.push(`format: '${outputFormat.value}'`)
   }
-  if (writingFormat.value !== 'markdown') {
-    options.push(`format: '${writingFormat.value}'`)
+  if (contentLength.value !== 'medium') {
+    options.push(`length: '${contentLength.value}'`)
+  }
+  if (writingStyle.value !== 'professional') {
+    options.push(`style: '${writingStyle.value}'`)
+  }
+  if (additionalContext.value) {
+    options.push(`context: '${additionalContext.value.replace(/'/g, "\\'")}'`)
   }
 
   const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
 
-  const writeCode = enableStreaming.value ?
-    `// Use streaming API for real-time updates
+  const writeCode = enableStreaming.value
+    ? `// Use streaming API for real-time updates
 const stream = await writer.writeStreaming(
-  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}\
+  ${writingPrompt.value ? `'${writingPrompt.value.replace(/'/g, "\\'")}'` : "'Writing task prompt'"}\
 ${optionsStr}
 )
 
 let result = ''
 for await (const chunk of stream) {
   result += chunk
-}` :
-    `// Use regular API for complete response
+}`
+    : `// Use regular API for complete response
 const result = await writer.write(
-  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}\
+  ${writingPrompt.value ? `'${writingPrompt.value.replace(/'/g, "\\'")}'` : "'Writing task prompt'"}\
 ${optionsStr}
 )`
 
@@ -196,8 +283,15 @@ async function checkSupport() {
   }
 }
 
-async function generateText() {
-  if (!isSupported.value || !writingTask.value.trim()) return
+function cancelGeneration() {
+  if (abortController.value) {
+    abortController.value.abort()
+    abortController.value = null
+  }
+}
+
+async function generateContent() {
+  if (!isSupported.value || !writingPrompt.value.trim()) return
 
   isProcessing.value = true
   error.value = ''
@@ -212,15 +306,17 @@ async function generateText() {
     }
 
     const options = {
-      tone: writingTone.value,
-      format: writingFormat.value,
+      format: outputFormat.value,
+      length: contentLength.value,
+      style: writingStyle.value,
+      context: additionalContext.value,
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
           downloadProgress.value = e.loaded * 100
           downloadStatus.value = 'Downloading model...'
         })
-      }
+      },
     }
 
     if (availability !== 'available') {
@@ -231,7 +327,7 @@ async function generateText() {
 
     if (enableStreaming.value) {
       // Use streaming API
-      const stream = await writer.writeStreaming(writingTask.value)
+      const stream = await writer.writeStreaming(writingPrompt.value)
       result.value = ''
 
       for await (const chunk of stream) {
@@ -239,15 +335,15 @@ async function generateText() {
       }
     } else {
       // Use regular API
-      const text = await writer.write(writingTask.value)
-      result.value = text
+      const content = await writer.write(writingPrompt.value)
+      result.value = content
     }
   } catch (err) {
     if (err.name === 'AbortError') {
       error.value = 'Operation cancelled'
     } else {
-      error.value = err.message || 'Failed to generate text'
-      console.error('Writing error:', err)
+      error.value = err.message || 'Failed to generate content'
+      console.error('Content generation error:', err)
     }
   } finally {
     isProcessing.value = false
