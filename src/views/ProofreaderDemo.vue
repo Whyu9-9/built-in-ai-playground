@@ -32,38 +32,10 @@
 
         <div class="space-y-4">
           <div class="flex items-center gap-2">
-            <h3 class="font-medium">Proofreader Options</h3>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Include Correction Types</label>
-              <USwitch v-model="includeCorrectionTypes" :disabled="!isSupported" />
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Include Explanations</label>
-              <USwitch v-model="includeCorrectionExplanations" :disabled="!isSupported" />
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-4" v-if="includeCorrectionExplanations">
-          <div class="flex items-center gap-2">
-            <h3 class="font-medium">Explanation Language</h3>
-          </div>
-          <USelect v-model="correctionExplanationLanguage" :items="explanationLanguageOptions"
-            :disabled="!isSupported" />
-        </div>
-
-        <div class="space-y-4">
-          <div class="flex items-center gap-2">
             <h3 class="font-medium">Expected Input Languages</h3>
           </div>
-          <USelectMenu v-model="expectedInputLanguages" :options="inputLanguageOptions" multiple
+          <USelectMenu v-model="expectedInputLanguages" :items="inputLanguageOptions" multiple
             :disabled="!isSupported" placeholder="Select expected input languages" />
-        </div>
-
-        <div class="space-y-4">
-          <StreamingToggle v-model="enableStreaming" :disabled="true" />
         </div>
 
         <div class="flex gap-2">
@@ -89,15 +61,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
-import StreamingToggle from '../components/StreamingToggle.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
 import { apiDocs } from '../data/apiDocs.js'
 import ResultDisplay from '../components/ResultDisplay.vue'
 
 const inputText = ref('I seen him yesterday atss the store, and he bought twa loafs of bread.')
-const includeCorrectionTypes = ref(true)
-const includeCorrectionExplanations = ref(true)
-const correctionExplanationLanguage = ref('en')
 const expectedInputLanguages = ref(['en'])
 const result = ref(null)
 const isProcessing = ref(false)
@@ -107,35 +75,13 @@ const downloadStatus = ref('')
 const downloadProgress = ref(0)
 const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
-const textAreaRef = ref(null)
-const enableStreaming = ref(false) // Proofreader API does not support streaming
-const explanationLanguageOptions = [
-  { label: 'English', value: 'en' },
-  { label: 'Spanish', value: 'es' },
-  { label: 'French', value: 'fr' },
-  { label: 'German', value: 'de' },
-  { label: 'Italian', value: 'it' },
-  { label: 'Portuguese', value: 'pt' },
-  { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese (Simplified)', value: 'zh-CN' },
-  { label: 'Chinese (Traditional)', value: 'zh-TW' },
-]
 
 const inputLanguageOptions = [
   { label: 'English', value: 'en' },
   { label: 'Spanish', value: 'es' },
   { label: 'French', value: 'fr' },
   { label: 'German', value: 'de' },
-  { label: 'Italian', value: 'it' },
-  { label: 'Portuguese', value: 'pt' },
   { label: 'Japanese', value: 'ja' },
-  { label: 'Korean', value: 'ko' },
-  { label: 'Chinese (Simplified)', value: 'zh-CN' },
-  { label: 'Chinese (Traditional)', value: 'zh-TW' },
-  { label: 'Russian', value: 'ru' },
-  { label: 'Arabic', value: 'ar' },
-  { label: 'Hindi', value: 'hi' },
 ]
 
 const canProcess = computed(() => {
@@ -143,30 +89,15 @@ const canProcess = computed(() => {
 })
 
 const generateExampleCode = computed(() => {
-  const options = []
-
-  if (includeCorrectionTypes.value) {
-    options.push(`includeCorrectionTypes: true`)
-  }
-  if (includeCorrectionExplanations.value) {
-    options.push(`includeCorrectionExplanations: true`)
-  }
-  if (includeCorrectionExplanations.value && correctionExplanationLanguage.value !== 'en') {
-    options.push(`correctionExplanationLanguage: '${correctionExplanationLanguage.value}'`)
-  }
-  if (expectedInputLanguages.value.length > 0) {
-    options.push(`expectedInputLanguages: ${JSON.stringify(expectedInputLanguages.value)}`)
-  }
-
-  const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
-
   const proofreadCode = `// Use regular API for complete response
 const result = await proofreader.proofread(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'I seen him yesterday at the store, and he bought two loafs of bread.'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'I seen him yesterday at the store, and he bought two loafs of bread.'"}
 )`
 
-  return `const available = await Proofreader.availability()
+  return `const options = {
+  expectedInputLanguages: ${JSON.stringify(expectedInputLanguages.value)},
+}
+const available = await Proofreader.availability(options)
 let proofreader
 
 if (available === 'unavailable') {
@@ -174,14 +105,15 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  proofreader = await Proofreader.create()
+  proofreader = await Proofreader.create(options)
 } else {
   proofreader = await Proofreader.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
       })
-    }${optionsStr}
+    }
   })
 }
 
@@ -221,7 +153,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (proofreader) {
-    proofreader.destroy()
+    proofreader.destroy?.()
   }
   if (abortController.value) {
     abortController.value.abort()
@@ -231,18 +163,7 @@ onUnmounted(() => {
 async function checkSupport() {
   try {
     if ('Proofreader' in window) {
-      const options = {
-        includeCorrectionTypes: includeCorrectionTypes.value,
-        includeCorrectionExplanations: includeCorrectionExplanations.value,
-      }
-
-      if (includeCorrectionExplanations.value && correctionExplanationLanguage.value) {
-        options.correctionExplanationLanguage = correctionExplanationLanguage.value
-      }
-
-      if (expectedInputLanguages.value.length > 0) {
-        options.expectedInputLanguages = expectedInputLanguages.value
-      }
+      const options = { expectedInputLanguages: expectedInputLanguages.value }
 
       const availability = await Proofreader.availability(options)
 
@@ -285,8 +206,7 @@ async function proofreadText() {
 
   try {
     const options = {
-      includeCorrectionTypes: includeCorrectionTypes.value,
-      includeCorrectionExplanations: includeCorrectionExplanations.value,
+      expectedInputLanguages: expectedInputLanguages.value,
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
@@ -296,15 +216,9 @@ async function proofreadText() {
       },
     }
 
-    if (includeCorrectionExplanations.value && correctionExplanationLanguage.value) {
-      options.correctionExplanationLanguage = correctionExplanationLanguage.value
-    }
-
-    if (expectedInputLanguages.value.length > 0) {
-      options.expectedInputLanguages = expectedInputLanguages.value
-    }
-
-    const availability = await Proofreader.availability(options)
+    const availability = await Proofreader.availability({
+      expectedInputLanguages: expectedInputLanguages.value,
+    })
 
     if (availability === 'unavailable') {
       throw new Error('Proofreader API is not available for the current configuration')
@@ -314,11 +228,11 @@ async function proofreadText() {
       downloadStatus.value = 'Model is being downloaded. Please wait...'
     }
 
+    if (proofreader) proofreader.destroy?.()
     proofreader = await Proofreader.create(options)
 
     // Proofreader API does not support streaming, so always use regular API
     const res = await proofreader.proofread(inputText.value)
-    console.log('Proofreader result:', res)
     result.value = res
   } catch (err) {
     if (err.name === 'AbortError') {

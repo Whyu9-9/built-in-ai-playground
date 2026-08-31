@@ -70,23 +70,6 @@
                     </div>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2">
-                        <h3 class="font-medium">Parameters</h3>
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-1">Temperature: {{ temperature }}</label>
-                            <USlider v-model="temperature" :min="minTemperature" :max="maxTemperature" :step="0.01"
-                                :disabled="!isSupported" />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-1">TopK: {{ topK }}</label>
-                            <USlider v-model="topK" :min="minTopK" :max="maxTopK" :step="1" :disabled="!isSupported" />
-                        </div>
-                    </div>
-                </div>
-
                 <div class="flex gap-2">
                     <UButton @click="sendPrompt" :loading="isProcessing" :disabled="!isSupported || !canProcess"
                         color="primary" size="md">
@@ -132,19 +115,28 @@ const videoRef = ref(null)
 let stream = null
 const capturedWebcamImage = ref(false)
 
-const temperature = ref(1.0)
-const minTemperature = ref(0.0)
-const maxTemperature = ref(2.0)
-const topK = ref(3)
-const minTopK = ref(1)
-const maxTopK = ref(8)
+const languageModelOptions = {
+    expectedInputs: [
+        { type: 'text', languages: ['en'] },
+        { type: 'image' },
+    ],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+}
 
 const canProcess = computed(() => inputText.value.trim().length > 0 && imageFile.value)
 
 const toggleCodeCollapse = ref(false)
 
 const generateExampleCode = computed(() => {
-    return `const available = await LanguageModel.availability()
+    return `const options = {
+  expectedInputs: [
+    { type: 'text', languages: ['en'] },
+    { type: 'image' },
+  ],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+}
+
+const available = await LanguageModel.availability(options)
 let model
 
 if (available === 'unavailable') {
@@ -152,9 +144,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  model = await LanguageModel.create()
+  model = await LanguageModel.create(options)
 } else {
   model = await LanguageModel.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -163,17 +156,15 @@ if (available === 'available') {
   })
 }
 
-// Get image data from a file input or canvas
+// Blob is one of the visual input types supported by the Prompt API.
 const imageFile = document.querySelector('input[type="file"]').files[0]
-const imageData = await imageFile.arrayBuffer()
-
-// Create a prompt with both text and image
-const prompt = {
-  text: ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'What can you tell me about this image?'"},
-  images: [imageData]
-}
-
-const result = await model.generateContent(prompt)`
+const result = await model.prompt([{
+  role: 'user',
+  content: [
+    { type: 'text', value: ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'What can you tell me about this image?'"} },
+    { type: 'image', value: imageFile },
+  ],
+}])`
 })
 
 const exampleCode = computed(() => generateExampleCode.value)
@@ -187,7 +178,6 @@ watch(imageMode, (newMode, oldMode) => {
 })
 
 onMounted(async () => {
-    await fetchParams()
     await checkSupport()
 })
 
@@ -196,31 +186,15 @@ onUnmounted(() => {
         abortController.value.abort()
     }
     if (session) {
-        session.destroy()
+        session.destroy?.()
     }
     stopWebcam()
 })
 
-async function fetchParams() {
-    if ('LanguageModel' in window && LanguageModel.params) {
-        try {
-            const params = await LanguageModel.params()
-            temperature.value = params.defaultTemperature
-            minTemperature.value = 0.0
-            maxTemperature.value = params.maxTemperature
-            topK.value = params.defaultTopK
-            minTopK.value = 1
-            maxTopK.value = params.maxTopK
-        } catch (e) {
-            // fallback to defaults
-        }
-    }
-}
-
 async function checkSupport() {
     try {
         if ('LanguageModel' in window) {
-            const availability = await LanguageModel.availability()
+            const availability = await LanguageModel.availability(languageModelOptions)
             if (availability === 'unavailable') {
                 isSupported.value = false
                 error.value = 'Prompt API is not supported in this browser.'
@@ -337,13 +311,13 @@ async function sendPrompt() {
     abortController.value = new AbortController()
 
     try {
-        const availability = await LanguageModel.availability()
+        const availability = await LanguageModel.availability(languageModelOptions)
         if (availability === 'unavailable') {
             throw new Error('Prompt API is not available.')
         }
 
         const options = {
-            expectedInputs: [{ type: 'image' }],
+            ...languageModelOptions,
             signal: abortController.value.signal,
             monitor(m) {
                 m.addEventListener('downloadprogress', (e) => {
@@ -357,20 +331,16 @@ async function sendPrompt() {
             downloadStatus.value = 'Model is being downloaded. Please wait...'
         }
 
+        if (session) session.destroy?.()
         session = await LanguageModel.create(options)
         const imageBlob = imageFile.value
-        console.log(imageBlob)
         const promptContent = [
             { type: 'text', value: inputText.value },
             { type: 'image', value: imageBlob }
         ]
         const response = await session.prompt([
             { role: 'user', content: promptContent }
-        ], {
-            signal: abortController.value.signal,
-            temperature: temperature.value,
-            topK: topK.value
-        })
+        ], { signal: abortController.value.signal })
         result.value = response
     } catch (err) {
         if (err.name === 'AbortError') {

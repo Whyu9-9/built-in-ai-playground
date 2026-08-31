@@ -162,13 +162,12 @@ const generateExampleCode = computed(() => {
     options.push(`sharedContext: '${sharedContext.value.replace(/'/g, "\\'")}'`)
   }
 
-  const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+  const optionsStr = options.length > 0 ? `  ${options.join(',\n  ')},\n` : ''
 
   const summarizeCode = enableStreaming.value ?
     `// Use streaming API for real-time updates
 const stream = await summarizer.summarizeStreaming(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}
 )
 
 let result = ''
@@ -177,11 +176,15 @@ for await (const chunk of stream) {
 }` :
     `// Use regular API for complete response
 const result = await summarizer.summarize(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to summarize'"}
 )`
 
-  return `const available = await Summarizer.availability()
+  return `const options = {
+${optionsStr}  expectedInputLanguages: ['en'],
+  expectedContextLanguages: ['en'],
+  outputLanguage: 'en',
+}
+const available = await Summarizer.availability()
 let summarizer
 
 if (available === 'unavailable') {
@@ -189,9 +192,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  summarizer = await Summarizer.create()
+  summarizer = await Summarizer.create(options)
 } else {
   summarizer = await Summarizer.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -214,7 +218,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (summarizer) {
-    summarizer.destroy()
+    summarizer.destroy?.()
   }
   if (abortController.value) {
     abortController.value.abort()
@@ -269,6 +273,9 @@ async function summarizeText() {
       type: summaryType.value,
       format: summaryFormat.value,
       length: summaryLength.value,
+      expectedInputLanguages: ['en'],
+      expectedContextLanguages: ['en'],
+      outputLanguage: 'en',
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
@@ -282,11 +289,14 @@ async function summarizeText() {
       downloadStatus.value = 'Model is being downloaded. Please wait...'
     }
 
+    if (summarizer) summarizer.destroy?.()
     summarizer = await Summarizer.create(options)
 
     if (enableStreaming.value) {
       // Use streaming API
-      const stream = await summarizer.summarizeStreaming(inputText.value)
+      const stream = summarizer.summarizeStreaming(inputText.value, {
+        signal: abortController.value.signal,
+      })
       result.value = ''
 
       for await (const chunk of stream) {
@@ -294,7 +304,9 @@ async function summarizeText() {
       }
     } else {
       // Use regular API
-      const summary = await summarizer.summarize(inputText.value)
+      const summary = await summarizer.summarize(inputText.value, {
+        signal: abortController.value.signal,
+      })
       result.value = summary
     }
   } catch (err) {

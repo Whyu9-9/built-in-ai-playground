@@ -64,23 +64,6 @@
           </div>
         </div>
 
-        <!-- Download Progress -->
-        <div v-if="apiStatus[api.key].downloadProgress !== null" class="mt-3">
-          <div
-            class="flex items-center justify-between text-xs mb-1"
-            style="color: var(--ui-text-muted)"
-          >
-            <span>Downloading model...</span>
-            <span>{{ Math.round(apiStatus[api.key].downloadProgress * 100) }}%</span>
-          </div>
-          <div class="w-full rounded-full h-2" style="background-color: var(--ui-border)">
-            <div
-              class="h-2 rounded-full transition-all duration-300"
-              style="background-color: var(--color-primary-500)"
-              :style="{ width: `${apiStatus[api.key].downloadProgress * 100}%` }"
-            />
-          </div>
-        </div>
       </div>
     </div>
 
@@ -90,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref } from 'vue'
 
 const apiList = [
   { key: 'summarizer', name: 'Summarizer API', icon: 'i-heroicons-document-text' },
@@ -114,26 +97,12 @@ const apiStatus = ref({
 
 const error = ref('')
 const hasChecked = ref(false)
-let checkInterval = null
-
 function onCheckSupport() {
   hasChecked.value = true
   checkApiStatus()
 }
 
-onUnmounted(() => {
-  if (checkInterval) {
-    clearInterval(checkInterval)
-  }
-})
-
-async function checkSingleApi({
-  key,
-  globalName,
-  availabilityArgs = {},
-  createArgs = {},
-  monitorDownload = false,
-}) {
+async function checkSingleApi({ key, globalName, availabilityArgs = {} }) {
   if (globalName in self) {
     const apiObj = self[globalName]
     let availability
@@ -153,24 +122,10 @@ async function checkSingleApi({
       apiStatus.value[key].downloadProgress = null
     } else {
       apiStatus.value[key].supported = true
-      if (availability !== 'available') {
+      if (availability === 'downloadable') {
+        apiStatus.value[key].status = 'Download required'
+      } else if (availability === 'downloading') {
         apiStatus.value[key].status = 'Downloading'
-        if (monitorDownload && typeof apiObj.create === 'function') {
-          try {
-            createArgs.monitor = (m) => {
-              m.addEventListener('downloadprogress', (e) => {
-                apiStatus.value[key].downloadProgress = e.loaded
-                if (e.loaded === 1) {
-                  apiStatus.value[key].status = 'Available'
-                  apiStatus.value[key].downloadProgress = null
-                }
-              })
-            }
-            await apiObj.create(createArgs)
-          } catch (err) {
-            console.error(`Failed to monitor ${globalName} download:`, err)
-          }
-        }
       } else {
         apiStatus.value[key].status = 'Available'
         apiStatus.value[key].downloadProgress = null
@@ -186,23 +141,27 @@ async function checkSingleApi({
 async function checkApiStatus() {
   try {
     await Promise.all([
-      checkSingleApi({ key: 'summarizer', globalName: 'Summarizer', monitorDownload: true }),
-      checkSingleApi({ key: 'writer', globalName: 'Writer', monitorDownload: true }),
-      checkSingleApi({ key: 'rewriter', globalName: 'Rewriter', monitorDownload: true }),
+      checkSingleApi({ key: 'summarizer', globalName: 'Summarizer' }),
+      checkSingleApi({ key: 'writer', globalName: 'Writer' }),
+      checkSingleApi({ key: 'rewriter', globalName: 'Rewriter' }),
       checkSingleApi({
         key: 'translator',
         globalName: 'Translator',
         availabilityArgs: { sourceLanguage: 'en', targetLanguage: 'fr' },
-        createArgs: { sourceLanguage: 'en', targetLanguage: 'fr' },
-        monitorDownload: true,
       }),
       checkSingleApi({
         key: 'languageDetector',
         globalName: 'LanguageDetector',
-        monitorDownload: true,
       }),
-      checkSingleApi({ key: 'prompt', globalName: 'LanguageModel', monitorDownload: true }),
-      checkSingleApi({ key: 'proofreader', globalName: 'Proofreader', monitorDownload: true }),
+      checkSingleApi({
+        key: 'prompt',
+        globalName: 'LanguageModel',
+        availabilityArgs: {
+          expectedInputs: [{ type: 'text', languages: ['en'] }],
+          expectedOutputs: [{ type: 'text', languages: ['en'] }],
+        },
+      }),
+      checkSingleApi({ key: 'proofreader', globalName: 'Proofreader' }),
     ])
     error.value = ''
   } catch (err) {
@@ -211,7 +170,4 @@ async function checkApiStatus() {
   }
 }
 
-const unsupportedApis = computed(() => apiList.filter((api) => !apiStatus.value[api.key].supported))
-
-const showEnableFlagsInstruction = computed(() => unsupportedApis.value.length > 0)
 </script>

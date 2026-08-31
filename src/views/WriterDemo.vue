@@ -35,9 +35,10 @@
           <div class="flex items-center gap-2">
             <h3 class="font-medium">Writing Style</h3>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-3 gap-4">
             <USelect v-model="writingTone" :items="toneOptions" :disabled="!isSupported" />
             <USelect v-model="writingFormat" :items="formatOptions" :disabled="!isSupported" />
+            <USelect v-model="writingLength" :items="lengthOptions" :disabled="!isSupported" />
           </div>
         </div>
 
@@ -74,6 +75,7 @@ import { apiDocs } from '../data/apiDocs.js'
 const writingTask = ref('')
 const writingTone = ref('neutral')
 const writingFormat = ref('markdown')
+const writingLength = ref('short')
 const result = ref('')
 const isProcessing = ref(false)
 const isSupported = ref(false)
@@ -95,6 +97,12 @@ const formatOptions = [
   { label: 'Plain Text', value: 'plain-text', description: 'Standard unformatted text' },
 ]
 
+const lengthOptions = [
+  { label: 'Short', value: 'short' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Long', value: 'long' },
+]
+
 const canProcess = computed(() => {
   return writingTask.value.trim() !== ''
 })
@@ -108,14 +116,16 @@ const generateExampleCode = computed(() => {
   if (writingFormat.value !== 'markdown') {
     options.push(`format: '${writingFormat.value}'`)
   }
+  if (writingLength.value !== 'short') {
+    options.push(`length: '${writingLength.value}'`)
+  }
 
-  const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+  const optionsStr = options.length > 0 ? `  ${options.join(',\n  ')},\n` : ''
 
   const writeCode = enableStreaming.value ?
     `// Use streaming API for real-time updates
 const stream = await writer.writeStreaming(
-  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}\
-${optionsStr}
+  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}
 )
 
 let result = ''
@@ -124,11 +134,14 @@ for await (const chunk of stream) {
 }` :
     `// Use regular API for complete response
 const result = await writer.write(
-  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}\
-${optionsStr}
+  ${writingTask.value ? `'${writingTask.value.replace(/'/g, "\\'")}'` : "'Write a product description for an eco-friendly water bottle'"}
 )`
 
-  return `const available = await Writer.availability()
+  return `const options = {
+${optionsStr}  expectedInputLanguages: ['en'],
+  outputLanguage: 'en',
+}
+const available = await Writer.availability()
 let writer
 
 if (available === 'unavailable') {
@@ -136,9 +149,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  writer = await Writer.create()
+  writer = await Writer.create(options)
 } else {
   writer = await Writer.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -160,7 +174,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (writer) {
-    writer.destroy()
+    writer.destroy?.()
   }
   if (abortController.value) {
     abortController.value.abort()
@@ -213,6 +227,9 @@ async function generateText() {
     const options = {
       tone: writingTone.value,
       format: writingFormat.value,
+      length: writingLength.value,
+      expectedInputLanguages: ['en'],
+      outputLanguage: 'en',
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
@@ -226,11 +243,14 @@ async function generateText() {
       downloadStatus.value = 'Model is being downloaded. Please wait...'
     }
 
+    if (writer) writer.destroy?.()
     writer = await Writer.create(options)
 
     if (enableStreaming.value) {
       // Use streaming API
-      const stream = await writer.writeStreaming(writingTask.value)
+      const stream = writer.writeStreaming(writingTask.value, {
+        signal: abortController.value.signal,
+      })
       result.value = ''
 
       for await (const chunk of stream) {
@@ -238,7 +258,9 @@ async function generateText() {
       }
     } else {
       // Use regular API
-      const text = await writer.write(writingTask.value)
+      const text = await writer.write(writingTask.value, {
+        signal: abortController.value.signal,
+      })
       result.value = text
     }
   } catch (err) {

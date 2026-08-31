@@ -137,13 +137,12 @@ const generateExampleCode = computed(() => {
     options.push(`sharedContext: '${sharedContext.value.replace(/'/g, "\\'")}'`)
   }
 
-  const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+  const optionsStr = options.length > 0 ? `  ${options.join(',\n  ')},\n` : ''
 
   const rewriteCode = enableStreaming.value ?
     `// Use streaming API for real-time updates
 const stream = await rewriter.rewriteStreaming(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}
 )
 
 let result = ''
@@ -152,11 +151,15 @@ for await (const chunk of stream) {
 }` :
     `// Use regular API for complete response
 const result = await rewriter.rewrite(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Please rewrite this sentence to be more formal.'"}
 )`
 
-  return `const available = await Rewriter.availability()
+  return `const options = {
+${optionsStr}  expectedInputLanguages: ['en'],
+  expectedContextLanguages: ['en'],
+  outputLanguage: 'en',
+}
+const available = await Rewriter.availability()
 let rewriter
 
 if (available === 'unavailable') {
@@ -164,9 +167,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  rewriter = await Rewriter.create()
+  rewriter = await Rewriter.create(options)
 } else {
   rewriter = await Rewriter.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -188,7 +192,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (rewriter) {
-    rewriter.destroy()
+    rewriter.destroy?.()
   }
   if (abortController.value) {
     abortController.value.abort()
@@ -250,6 +254,9 @@ async function rewriteText() {
       format: rewriteFormat.value,
       length: rewriteLength.value,
       sharedContext: sharedContext.value || undefined,
+      expectedInputLanguages: ['en'],
+      expectedContextLanguages: ['en'],
+      outputLanguage: 'en',
       signal: abortController.value.signal,
       monitor(m) {
         m.addEventListener('downloadprogress', (e) => {
@@ -263,11 +270,14 @@ async function rewriteText() {
       downloadStatus.value = 'Model is being downloaded. Please wait...'
     }
 
+    if (rewriter) rewriter.destroy?.()
     rewriter = await Rewriter.create(options)
 
     if (enableStreaming.value) {
       // Use streaming API
-      const stream = await rewriter.rewriteStreaming(inputText.value)
+      const stream = rewriter.rewriteStreaming(inputText.value, {
+        signal: abortController.value.signal,
+      })
       result.value = ''
 
       for await (const chunk of stream) {
@@ -275,7 +285,9 @@ async function rewriteText() {
       }
     } else {
       // Use regular API
-      const text = await rewriter.rewrite(inputText.value)
+      const text = await rewriter.rewrite(inputText.value, {
+        signal: abortController.value.signal,
+      })
       result.value = text
     }
   } catch (err) {

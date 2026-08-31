@@ -1,6 +1,6 @@
 # Built-in AI Playground
 
-An interactive playground for exploring Chrome's experimental built-in AI APIs. Test text generation, translation, summarization, and more directly in your browser without any server setup.
+An interactive playground for Chrome's built-in AI APIs. Models run on-device after their initial download, so the demos do not need an application server or API key.
 
 ## 🚀 Features
 
@@ -22,36 +22,18 @@ An interactive playground for exploring Chrome's experimental built-in AI APIs. 
 - **Interactive Code Examples**: View and copy implementation code for each API
 - **Official Documentation Links**: Direct access to MDN docs and GitHub explainers
 - **Responsive Design**: Modern UI built with Nuxt UI components
-- **Parameter Controls**: Adjust temperature, topK, and other model parameters
+- **Structured Output**: Pass a JSON Schema to the Prompt API
 
 ## 🛠️ Setup
 
 ### Prerequisites
 
-1. **Supported Browsers**:
-   - **Chrome 127+**: Primary support with experimental features
-   - **Chrome Canary/Dev**: Recommended for latest features
-   - **Microsoft Edge 127+**: Support for most APIs with experimental features
-   - **Edge Canary/Dev**: Latest Edge features and APIs
-2. **Enable experimental features**:
+1. Use an up-to-date desktop version of Chrome. Built-in models are not available on mobile.
+2. Foundation-model APIs require Windows 10/11, macOS 13+, Linux, or a Chromebook Plus; at least 22 GB of free storage; and either more than 4 GB VRAM or at least 16 GB RAM with 4 CPU cores. Audio input requires a GPU.
+3. For localhost development, enable `chrome://flags/#optimization-guide-on-device-model` and `chrome://flags/#prompt-api-for-gemini-nano`, then relaunch Chrome.
+4. Preview APIs can require their own flag, developer trial, or origin trial. Follow the official page linked from each demo because availability changes independently.
 
-   **For Chrome:**
-
-   - Go to `chrome://flags/`
-   - Search for "Experimental Web Platform features"
-   - Set to "Enabled"
-   - Restart Chrome
-
-   **For Edge:**
-
-   - Go to `edge://flags/`
-   - Search for "Experimental Web Platform features"
-   - Set to "Enabled"
-   - Restart Edge
-
-3. **For Origin Trial APIs** (Writer, Rewriter, Prompt):
-   - Some APIs may require origin trial tokens
-   - Check the [Chrome Origin Trials page](https://developer.chrome.com/origintrials/) for current status
+See Chrome's [built-in AI getting-started guide](https://developer.chrome.com/docs/ai/get-started) for the current requirements and troubleshooting steps.
 
 ### Installation
 
@@ -69,7 +51,7 @@ npm run dev
 
 ## 🎯 Usage
 
-1. **Open the application** in Chrome or Edge (with experimental features enabled)
+1. **Open the application** in desktop Chrome
 2. **Check API Support**: The homepage displays real-time API availability
 3. **Navigate demos**: Use the sidebar to explore different AI capabilities:
    - **Prompt Demo**: Text generation with streaming support
@@ -82,7 +64,7 @@ npm run dev
    - **Language Detector**: Automatic language identification
 4. **View code examples**: Toggle code examples to see implementation details
 5. **Access documentation**: Click documentation links for official API references
-6. **Adjust parameters**: Fine-tune AI behavior with temperature and topK controls
+6. **Try structured output**: Provide a JSON Schema in the text Prompt demo
 
 ## 📚 API Documentation
 
@@ -90,28 +72,15 @@ npm run dev
 
 | API                       | Description                                              | Documentation                                                                                         | Status       |
 | ------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| **Prompt API**            | General-purpose text generation with streaming support   | [GitHub Explainer](https://github.com/webmachinelearning/prompt-api)                                  | In EPP       |
-| **Summarizer API**        | Generate key points, TL;DR, teasers, or headlines        | [MDN Documentation](https://developer.mozilla.org/docs/Web/API/Summarizer/)                           | Chrome 138+  |
-| **Writer API**            | Create new content based on writing tasks                | [GitHub Explainer](https://github.com/explainers-by-googlers/writing-assistance-apis)                 | Origin Trial |
-| **Rewriter API**          | Transform existing text with different tones and formats | [GitHub Explainer](https://github.com/explainers-by-googlers/writing-assistance-apis)                 | Origin Trial |
-| **Translator API**        | Translate between multiple languages                     | [MDN Documentation](https://developer.mozilla.org/docs/Web/API/Translator_and_Language_Detector_APIs) | Chrome 138+  |
-| **Language Detector API** | Identify languages in text                               | [MDN Documentation](https://developer.mozilla.org/docs/Web/API/Translator_and_Language_Detector_APIs) | Chrome 138+  |
+| **Prompt API**            | General-purpose text and multimodal prompting             | [Chrome documentation](https://developer.chrome.com/docs/ai/prompt-api)             | Chrome 148+  |
+| **Summarizer API**        | Generate key points, TL;DR, teasers, or headlines         | [Chrome documentation](https://developer.chrome.com/docs/ai/summarizer-api)         | Stable       |
+| **Writer API**            | Create new content based on writing tasks                 | [Chrome documentation](https://developer.chrome.com/docs/ai/writer-api)             | Preview      |
+| **Rewriter API**          | Transform existing text with different tones and formats  | [Chrome documentation](https://developer.chrome.com/docs/ai/rewriter-api)           | Preview      |
+| **Translator API**        | Translate between supported language packs                | [Chrome documentation](https://developer.chrome.com/docs/ai/translator-api)         | Stable       |
+| **Language Detector API** | Identify languages in text                                | [Chrome documentation](https://developer.chrome.com/docs/ai/language-detection)     | Stable       |
+| **Proofreader API**       | Correct spelling, grammar, and punctuation                 | [Chrome documentation](https://developer.chrome.com/docs/ai/proofreader-api)        | Preview      |
 
-### Browser Compatibility
-
-- **Chrome 127+**: Basic support with experimental flags
-- **Chrome 138+**: Native support for Summarizer, Translator, Language Detector
-- **Chrome Canary/Dev**: Recommended for latest features and APIs in development
-- **Microsoft Edge 127+**: Basic support with experimental flags
-- **Microsoft Edge 138+**: Native support for Summarizer, Translator, Language Detector
-- **Edge Canary/Dev**: Latest Edge features and experimental APIs
-
-### API Status Levels
-
-- **Chrome Stable**: Available in stable Chrome releases
-- **Origin Trial**: Requires registration and trial tokens
-- **In EPP**: Available in Early Preview Program
-- **Experimental**: Behind feature flags only
+The runtime status panel uses each API's `availability()` result: `unavailable`, `downloadable`, `downloading`, or `available`. Model downloads begin only from a demo action so Chrome's user-activation requirement is satisfied.
 
 ## 🔧 Development
 
@@ -176,12 +145,4 @@ Created with [Cursor AI](https://cursor.sh) and [@thangman22](https://github.com
 
 ## ⚠️ Disclaimer
 
-This project uses experimental web platform APIs that are currently in development and may change or be removed in future versions. Some features require:
-
-- Chrome/Edge Canary or experimental flags
-- Origin trial registration for certain APIs
-- Early Preview Program participation
-
-Use for educational and experimental purposes only. Not recommended for production applications.
-
-**Note**: API availability may vary between Chrome and Edge. Some APIs might be available in one browser but not the other, or may have different implementation statuses.
+Some built-in AI APIs are still in preview and may change. Check the official Chrome page for an API before shipping it to production, and always keep feature detection and an `unavailable` fallback.

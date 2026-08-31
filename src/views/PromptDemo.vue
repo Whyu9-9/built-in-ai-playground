@@ -41,10 +41,10 @@
 
                     <div v-if="outputType === 'structured'" class="space-y-4">
                         <div class="flex items-center gap-2">
-                            <h3 class="font-medium">Structure Instructions / JSON Schema</h3>
+                            <h3 class="font-medium">JSON Schema</h3>
                         </div>
                         <UTextarea v-model="structureSchema"
-                            placeholder="Enter JSON schema or instructions for structured output..." :rows="4"
+                            placeholder='{"type":"object","properties":{"answer":{"type":"string"}},"required":["answer"]}' :rows="4"
                             :disabled="!isSupported" class="w-full font-mono text-sm" />
                     </div>
 
@@ -66,24 +66,6 @@
 
                     <div class="space-y-4">
                         <StreamingToggle v-model="enableStreaming" :disabled="!isSupported" />
-                    </div>
-
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-medium">Parameters</h3>
-                        </div>
-                        <div class="flex flex-col gap-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Temperature: {{ temperature }}</label>
-                                <USlider v-model="temperature" :min="minTemperature" :max="maxTemperature" :step="0.01"
-                                    :disabled="!isSupported" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">TopK: {{ topK }}</label>
-                                <USlider v-model="topK" :min="minTopK" :max="maxTopK" :step="1"
-                                    :disabled="!isSupported" />
-                            </div>
-                        </div>
                     </div>
 
                     <div class="flex gap-2">
@@ -127,15 +109,13 @@ const downloadStatus = ref('')
 const downloadProgress = ref(0)
 const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
-const temperature = ref(1.0)
-const minTemperature = ref(0.0)
-const maxTemperature = ref(2.0)
-const topK = ref(3)
-const minTopK = ref(1)
-const maxTopK = ref(8)
 const enableStreaming = ref(false)
 let session = null
 
+const languageModelOptions = {
+    expectedInputs: [{ type: 'text', languages: ['en'] }],
+    expectedOutputs: [{ type: 'text', languages: ['en'] }],
+}
 
 const outputType = ref('text')
 const outputTypeOptions = [
@@ -147,6 +127,7 @@ const structureSchema = ref('')
 // Initial Prompts
 const initialPrompts = ref([])
 const roleOptions = [
+    { label: 'system', value: 'system' },
     { label: 'user', value: 'user' },
     { label: 'assistant', value: 'assistant' }
 ]
@@ -158,36 +139,20 @@ function removeInitialPrompt(idx) {
     initialPrompts.value.splice(idx, 1)
 }
 
-const canProcess = computed(() => inputText.value.trim().length > 0)
-
-const formattedResult = computed(() => {
-    if (outputType.value === 'structured') {
-        try {
-            return JSON.stringify(JSON.parse(result.value), null, 2)
-        } catch {
-            return result.value
-        }
-    }
-    return ''
-})
+const canProcess = computed(() =>
+    inputText.value.trim().length > 0 &&
+    (outputType.value !== 'structured' || structureSchema.value.trim().length > 0)
+)
 
 const generateExampleCode = computed(() => {
-    const options = []
-
-    if (temperature.value !== 1.0) {
-        options.push(`temperature: ${temperature.value}`)
-    }
-    if (topK.value !== 3) {
-        options.push(`topK: ${topK.value}`)
-    }
-
-    const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
+    const promptOptions = outputType.value === 'structured'
+        ? `, { responseConstraint: ${structureSchema.value || '{ /* JSON Schema */ }'} }`
+        : ''
 
     const promptCode = enableStreaming.value ?
         `// Use streaming API for real-time updates
 const stream = await model.promptStreaming(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Your prompt goes here'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Your prompt goes here'"}${promptOptions}
 )
 
 let result = ''
@@ -196,11 +161,15 @@ for await (const chunk of stream) {
 }` :
         `// Use regular API for complete response
 const result = await model.prompt(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Your prompt goes here'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Your prompt goes here'"}${promptOptions}
 )`
 
-    return `const available = await LanguageModel.availability()
+    return `const options = {
+  expectedInputs: [{ type: 'text', languages: ['en'] }],
+  expectedOutputs: [{ type: 'text', languages: ['en'] }],
+${initialPrompts.value.length ? `  initialPrompts: ${JSON.stringify(initialPrompts.value)},\n` : ''}}
+
+const available = await LanguageModel.availability(options)
 let model
 
 if (available === 'unavailable') {
@@ -208,9 +177,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  model = await LanguageModel.create()
+  model = await LanguageModel.create(options)
 } else {
   model = await LanguageModel.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -225,7 +195,6 @@ ${promptCode}`
 const exampleCode = computed(() => generateExampleCode.value)
 
 onMounted(async () => {
-    await fetchParams()
     await checkSupport()
 })
 
@@ -234,30 +203,14 @@ onUnmounted(() => {
         abortController.value.abort()
     }
     if (session) {
-        session.destroy()
+        session.destroy?.()
     }
 })
-
-async function fetchParams() {
-    if ('LanguageModel' in window && LanguageModel.params) {
-        try {
-            const params = await LanguageModel.params()
-            temperature.value = params.defaultTemperature
-            minTemperature.value = 0.0
-            maxTemperature.value = params.maxTemperature
-            topK.value = params.defaultTopK
-            minTopK.value = 1
-            maxTopK.value = params.maxTopK
-        } catch (e) {
-            // fallback to defaults
-        }
-    }
-}
 
 async function checkSupport() {
     try {
         if ('LanguageModel' in window) {
-            const availability = await LanguageModel.availability()
+            const availability = await LanguageModel.availability(languageModelOptions)
             if (availability === 'unavailable') {
                 isSupported.value = false
                 error.value = 'Prompt API is not supported in this browser.'
@@ -297,33 +250,42 @@ async function sendPrompt() {
     abortController.value = new AbortController()
 
     try {
-        const availability = await LanguageModel.availability()
-
-        if (availability === 'unavailable') {
-            throw new Error('Language Model API is not available for the current configuration')
+        const promptOptions = { signal: abortController.value.signal }
+        if (outputType.value === 'structured') {
+            try {
+                promptOptions.responseConstraint = JSON.parse(structureSchema.value)
+            } catch {
+                throw new Error('JSON Schema must be valid JSON.')
+            }
         }
 
-        const options = {
-            temperature: temperature.value,
-            topK: topK.value,
+        const createOptions = {
+            ...languageModelOptions,
             signal: abortController.value.signal,
+            initialPrompts: initialPrompts.value.filter((prompt) => prompt.content.trim()),
             monitor(m) {
                 m.addEventListener('downloadprogress', (e) => {
                     downloadProgress.value = e.loaded * 100
                     downloadStatus.value = 'Downloading model...'
                 })
-            }
+            },
+        }
+        const availability = await LanguageModel.availability(languageModelOptions)
+
+        if (availability === 'unavailable') {
+            throw new Error('Language Model API is not available for the current configuration')
         }
 
         if (availability !== 'available') {
             downloadStatus.value = 'Model is being downloaded. Please wait...'
         }
 
-        const model = await LanguageModel.create(options)
+        if (session) session.destroy?.()
+        session = await LanguageModel.create(createOptions)
 
         if (enableStreaming.value) {
             // Use streaming API
-            const stream = await model.promptStreaming(inputText.value)
+            const stream = session.promptStreaming(inputText.value, promptOptions)
             result.value = ''
 
             for await (const chunk of stream) {
@@ -331,7 +293,7 @@ async function sendPrompt() {
             }
         } else {
             // Use regular API
-            const response = await model.prompt(inputText.value)
+            const response = await session.prompt(inputText.value, promptOptions)
             result.value = response
         }
     } catch (err) {

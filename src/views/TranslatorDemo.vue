@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import CodeExample from '../components/CodeExample.vue'
 import ApiExplainer from '../components/ApiExplainer.vue'
 import { apiDocs } from '../data/apiDocs.js'
@@ -82,7 +82,7 @@ const downloadProgress = ref(0)
 const abortController = ref(null)
 const toggleCodeCollapse = ref(false)
 
-const languageOptions = [
+const allLanguageOptions = [
     { label: 'Afrikaans', value: 'af' },
     { label: 'Albanian', value: 'sq' },
     { label: 'Amharic', value: 'am' },
@@ -195,8 +195,16 @@ const languageOptions = [
     { label: 'Xhosa', value: 'xh' },
     { label: 'Yoruba', value: 'yo' },
     { label: 'Zulu', value: 'zu' },
-    // Add more as needed
 ]
+
+// Chrome's current implementation exposes these language packs.
+const supportedLanguageCodes = new Set([
+    'ar', 'bg', 'bn', 'cs', 'da', 'de', 'el', 'en', 'es', 'fi', 'fr', 'he', 'hi',
+    'hr', 'hu', 'id', 'it', 'ja', 'kn', 'ko', 'lt', 'mr', 'nl', 'no', 'pl', 'pt',
+    'ro', 'ru', 'sk', 'sl', 'sv', 'ta', 'te', 'th', 'tr', 'uk', 'vi', 'zh', 'zh-Hant',
+])
+const languageOptions = allLanguageOptions.filter((language) => supportedLanguageCodes.has(language.value))
+languageOptions.push({ label: 'Chinese (Traditional)', value: 'zh-Hant' })
 
 const canProcess = computed(() => {
     return inputText.value.trim() !== '' && sourceLanguage.value && targetLanguage.value && sourceLanguage.value !== targetLanguage.value
@@ -205,18 +213,12 @@ const canProcess = computed(() => {
 let translator = null
 
 const generateExampleCode = computed(() => {
-    const options = []
+    return `const options = {
+  sourceLanguage: '${sourceLanguage.value}',
+  targetLanguage: '${targetLanguage.value}',
+}
 
-    if (targetLanguage.value !== 'en') {
-        options.push(`targetLang: '${targetLanguage.value}'`)
-    }
-    if (sourceLanguage.value !== 'auto') {
-        options.push(`sourceLang: '${sourceLanguage.value}'`)
-    }
-
-    const optionsStr = options.length > 0 ? `,\n  ${options.join(',\n  ')}` : ''
-
-    return `const available = await Translator.availability()
+const available = await Translator.availability(options)
 let translator
 
 if (available === 'unavailable') {
@@ -224,9 +226,10 @@ if (available === 'unavailable') {
 }
 
 if (available === 'available') {
-  translator = await Translator.create()
+  translator = await Translator.create(options)
 } else {
   translator = await Translator.create({
+    ...options,
     monitor(m) {
       m.addEventListener('downloadprogress', (e) => {
         console.log(\`Downloaded \${e.loaded * 100}%\`)
@@ -236,8 +239,7 @@ if (available === 'available') {
 }
 
 const result = await translator.translate(
-  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to translate goes here...'"}\
-${optionsStr}
+  ${inputText.value ? `'${inputText.value.replace(/'/g, "\\'")}'` : "'Text to translate goes here...'"}
 )`
 })
 
@@ -247,9 +249,14 @@ onMounted(async () => {
     await checkSupport()
 })
 
+watch([sourceLanguage, targetLanguage], checkSupport)
+
 onUnmounted(() => {
     if (abortController.value) {
         abortController.value.abort()
+    }
+    if (translator) {
+        translator.destroy?.()
     }
 })
 
@@ -324,6 +331,7 @@ async function translateText() {
             downloadStatus.value = 'Model is being downloaded. Please wait...'
         }
 
+        if (translator) translator.destroy?.()
         translator = await Translator.create(options)
         const translated = await translator.translate(inputText.value)
         result.value = translated

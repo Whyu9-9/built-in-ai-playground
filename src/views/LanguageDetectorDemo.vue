@@ -111,6 +111,7 @@ onUnmounted(() => {
     if (abortController.value) {
         abortController.value.abort()
     }
+    detector?.destroy?.()
 })
 
 async function checkSupport() {
@@ -175,8 +176,8 @@ async function detectLanguage() {
             downloadStatus.value = 'Model is being downloaded. Please wait...'
         }
 
+        detector?.destroy?.()
         detector = await LanguageDetector.create(options)
-        await detector.ready
         const detected = await detector.detect(inputText.value)
         results.value = detected
     } catch (err) {
